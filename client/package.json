@@ -1,18 +1,42 @@
 {
-  "name": "nestle-eos-server",
-  "version": "1.0.0",
-  "description": "Nestl\u00e9 HR\u00b7EOS \u2014 Enterprise AI Operating System",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js",
-    "build": "cd client && npm install && npm run build"
-  },
+  "name": "nestle-demo",
+  "version": "0.1.0",
+  "private": true,
   "dependencies": {
-    "better-sqlite3": "^9.4.3",
-    "cors": "^2.8.5",
-    "express": "^4.18.2"
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^13.5.0",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-scripts": "5.0.1",
+    "web-vitals": "^2.1.4",
+    "xml-crypto": "^6.1.2"
   },
-  "engines": {
-    "node": ">=18.0.0"
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   }
 }
