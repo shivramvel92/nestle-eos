@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+client/node_modules/
+
+# Database (will be recreated on deploy)
+*.db
+*.db-shm
+*.db-wal
+
+# Environment
+.env
+.env.local
+
+# Build
+client/build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
