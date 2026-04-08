@@ -1,12 +1,11 @@
 {
   "name": "nestle-eos-server",
   "version": "1.0.0",
-  "description": "Nestlé HR·EOS — Enterprise AI Operating System",
+  "description": "Nestl\u00e9 HR\u00b7EOS \u2014 Enterprise AI Operating System",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "build:client": "cd client && npm install && npm run build",
-    "postinstall": "cd client && npm install && npm run build"
+    "build": "cd client && npm install && npm run build"
   },
   "dependencies": {
     "better-sqlite3": "^9.4.3",
@@ -15,8 +14,5 @@
   },
   "engines": {
     "node": ">=18.0.0"
-  },
-    {
-  "proxy": "http://localhost:3001"
   }
 }

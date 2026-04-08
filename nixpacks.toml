@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ["nodejs_22", "python3", "pkg-config", "gcc", "gnumake"]
+
+[phases.install]
+cmds = ["npm install"]
+
+[phases.build]
+cmds = ["cd client && npm install && npm run build"]
+
+[start]
+cmd = "node server.js"
