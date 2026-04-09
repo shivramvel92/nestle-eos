@@ -3,6 +3,13 @@ const cors     = require("cors");
 const crypto   = require("crypto");
 const { hashPassword, verifyPassword, createToken, verifyToken, USERS, SESSIONS } = require("./auth");
 const DB       = require("./database");
+
+// Auto-seed employees if DB is empty
+if (DB.countEmployees() === 0) {
+  try { require("./seed_employees"); console.log("✅ Auto-seeded employees"); }
+  catch(e) { console.error("⚠️ Seed error:", e.message); }
+}
+
 const app      = express();
 
 // ── Config ────────────────────────────────────────────────────────
