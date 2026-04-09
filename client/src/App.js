@@ -4,11 +4,13 @@ import { useState, useEffect, useRef, useMemo } from "react";
 // SAP Fiori-style typography: Inter font
 const FONT_LINK = document.createElement("link");
 FONT_LINK.rel = "stylesheet";
-FONT_LINK.href = "https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;500;600;700;800;900&display=swap";
+FONT_LINK.href = "https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap";
 document.head.appendChild(FONT_LINK);
 
 const ANTHROPIC_MODEL = "claude-sonnet-4-20250514";
-const API_BASE = "http://localhost:3001";
+// Auto-detect backend URL: same origin in production, localhost in dev
+const API_BASE = process.env.REACT_APP_API_URL ||
+  (window.location.hostname === "localhost" ? "http://localhost:3001" : "");
 const tok = () => localStorage.getItem("eos_token") || "";
 const authH = () => ({ "Content-Type":"application/json", "Authorization":"Bearer "+tok() });
 const apiFetch = (path, opts={}) => fetch(API_BASE+path, { ...opts, headers:{ ...authH(), ...(opts.headers||{}) } }).then(r=>r.json());
@@ -26,24 +28,50 @@ const DEMO_HINTS = [
 ];
 
 
+// ── Topaz Design System ─────────────────────────────────────────
 const C = {
-  bg:         "#F5F5F5",   // nestle.com light grey page bg
-  surface:    "#FFFFFF",   // pure white cards
-  surfaceAlt: "#F0F2F5",   // slightly off-white alt
-  border:     "#E0E0E0",   // very light border
-  accent:     "#E8312A",   // Nestlé red (primary brand)
+  // Layout
+  bg:         "#f0f4f9",        // page background
+  surface:    "#ffffff",        // card surface
+  surfaceAlt: "#e8edf5",        // elevated alt
+  border:     "rgba(10,49,97,0.09)",
+  border2:    "rgba(10,49,97,0.16)",
+  sidebar:    "#0a3161",        // navy sidebar
+  sidebarMid: "#164e8a",
+
+  // Brand
+  accent:     "#E8312A",        // Nestlé red (kept for brand)
   accentSoft: "#FF4D44",
-  accentBlue: "#005695",   // Nestlé blue (secondary brand)
-  gold:       "#B45309",   // warm amber
-  text:       "#1A1A1A",   // near-black primary text
-  muted:      "#6B7280",   // medium grey
-  mutedLight: "#9CA3AF",   // light grey
-  green:      "#047857",   // deep green
-  yellow:     "#D97706",
-  blue:       "#005695",   // Nestlé brand blue
+  topaz:      "#00b5a8",        // Infosys Topaz
+  topazDark:  "#007d74",
+  topazLight: "#e0f7f5",
+  navy:       "#0a3161",
+  navyDeep:   "#061e3d",
+  navyMid:    "#164e8a",
+  blue:       "#1e6dc5",
+  blueLight:  "#e8f1fb",
+  blueMid:    "#a8c8f0",
+
+  // Text
+  text:       "#0d1f35",        // primary text
+  text2:      "#3a5068",        // secondary text
+  muted:      "#7a8fa8",        // muted text
+  mutedLight: "#9CA3AF",
+
+  // Semantic
+  green:      "#2d8a3e",
+  greenLight: "#e8f5ea",
+  amber:      "#b86a00",
+  amberLight: "#fef3e2",
+  red:        "#c0392b",
+  redLight:   "#fdecea",
   purple:     "#6D28D9",
-  shadow:     "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)",
-  shadowMd:   "0 4px 12px rgba(0,0,0,0.08)",
+  gold:       "#b86a00",
+  yellow:     "#b86a00",
+
+  // Shadows
+  shadow:    "0 2px 12px rgba(10,49,97,0.08)",
+  shadowMd:  "0 4px 24px rgba(10,49,97,0.12)",
 };
 
 // ── seeded PRNG ────────────────────────────────────────────────────
@@ -176,7 +204,7 @@ const PAGE_SIZE = 25;
 const Badge = ({ label, color }) => {
   const map = { red:["#FFF1F0","#CF1322","#FFCCC7"], yellow:["#FFFBE6","#D46B08","#FFE58F"], green:["#F6FFED","#389E0D","#B7EB8F"], blue:["#E6F4FF","#005695","#91CAFF"], purple:["#F9F0FF","#531DAB","#D3ADF7"] };
   const [bg,txt,bd] = map[color]||map.green;
-  return <span style={{ fontSize:10, fontWeight:600, letterSpacing:"0.06em", padding:"2px 8px", borderRadius:4, background:bg, color:txt, border:`1px solid ${bd}`, whiteSpace:"nowrap", fontVariantNumeric:"tabular-nums" }}>{label}</span>;
+  return <span style={{ fontSize:10.5, fontWeight:500, padding:"3px 9px", borderRadius:20, background:bg, color:txt, border:`1px solid ${bd}`, whiteSpace:"nowrap", display:"inline-flex", alignItems:"center", gap:4 }}><span style={{ width:5,height:5,borderRadius:"50%",background:txt,display:"inline-block",flexShrink:0 }}/>{label}</span>;
 };
 
 function useAIChat() {
@@ -263,16 +291,16 @@ function EmployeeDetail({ emp, factory, onClose, onApply }) {
 
   return (
     <div style={{ width:"40%", minWidth:360, borderLeft:`1px solid ${C.border}`, background:C.surface, overflowY:"auto", display:"flex", flexDirection:"column", animation:"slideIn 0.2s ease" }}>
-      <div style={{ padding:"18px 22px", borderBottom:`1px solid ${C.border}`, display:"flex", justifyContent:"space-between", alignItems:"center", background:"#F8F9FA" }}>
+      <div style={{ padding:"18px 22px", borderBottom:`1px solid ${C.border}`, display:"flex", justifyContent:"space-between", alignItems:"center", background:"#f0f4f9" }}>
         <span style={{ fontWeight:800, fontSize:14 }}>Employee Profile</span>
-        <button onClick={onClose} style={{ background:"none", border:"1px solid #E0E0E0", borderRadius:6, padding:"4px 10px", color:"#9CA3AF", fontSize:13, cursor:"pointer" }}>✕</button>
+        <button onClick={onClose} style={{ background:"none", border:"1px solid #E0E0E0", borderRadius:6, padding:"4px 10px", color:"#7a8fa8", fontSize:13, cursor:"pointer" }}>✕</button>
       </div>
       <div style={{ padding:22, flex:1 }}>
         <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:22 }}>
           <div style={{ width:62, height:62, borderRadius:"50%", background:`hsl(${hue},70%,92%)`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, fontWeight:800, color:`hsl(${hue},70%,32%)`, flexShrink:0, border:`2px solid hsl(${hue},60%,82%)` }}>{emp.avatar}</div>
           <div>
             <div style={{ fontWeight:800, fontSize:19 }}>{emp.name}</div>
-            <div style={{ color:"#6B7280", fontSize:11, marginBottom:6 }}>{emp.id}</div>
+            <div style={{ color:"#7a8fa8", fontSize:11, marginBottom:6 }}>{emp.id}</div>
             <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
               <Badge label={emp.fatigueRisk+" RISK"} color={emp.fatigueRisk==="HIGH"?"red":emp.fatigueRisk==="MEDIUM"?"yellow":"green"} />
               <Badge label={emp.shift.label.toUpperCase()+" SHIFT"} color={emp.shift.id==="A"?"yellow":emp.shift.id==="B"?"blue":"purple"} />
@@ -285,7 +313,7 @@ function EmployeeDetail({ emp, factory, onClose, onApply }) {
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:18 }}>
           {[["Role",emp.role],["Department",emp.dept],["Factory",factory.name],["Country",factory.country],["Tenure",emp.tenure+" months"],["Safety Score",safetyScore+" / 100"],["Hours / Week",overtimeHrs+"h"],["Work Schedule",emp.scheduleName||emp.shift.label],["Timezone",emp.timezone||"—"],["Schedule Hours",emp.scheduleHours+"h/day"]].map(([k,v])=>(
             <div key={k} style={{ background:"#F8F8F8", border:"1px solid #EBEBEB", borderRadius:8, padding:"10px 12px" }}>
-              <div style={{ color:"#9CA3AF", fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:3 }}>{k}</div>
+              <div style={{ color:"#7a8fa8", fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:3 }}>{k}</div>
               <div style={{ fontWeight:600, fontSize:12, wordBreak:"break-word" }}>{v}</div>
             </div>
           ))}
@@ -298,7 +326,7 @@ function EmployeeDetail({ emp, factory, onClose, onApply }) {
           </div>
         )}
 
-        <div style={{ background:"#F8F9FA", border:`1px solid ${C.border}`, borderRadius:10, padding:16, marginBottom:16 }}>
+        <div style={{ background:"#f0f4f9", border:`1px solid ${C.border}`, borderRadius:10, padding:16, marginBottom:16 }}>
           <div style={{ fontWeight:700, fontSize:11, color:C.muted, letterSpacing:"0.08em", textTransform:"uppercase", marginBottom:12 }}>
             📅 Weekly Schedule {appliedSet.size>0 && <span style={{ color:C.green, marginLeft:6 }}>· Updated</span>}
           </div>
@@ -309,7 +337,7 @@ function EmployeeDetail({ emp, factory, onClose, onApply }) {
                 <div key={d} style={{ textAlign:"center" }}>
                   <div style={{ fontSize:9, color:C.muted, marginBottom:4, fontWeight:600 }}>{d}</div>
                   <div style={{ height:50, borderRadius:8, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, background:on?emp.shift.bg:"#F8F9FA", border:`1px solid ${on?emp.shift.border||emp.shift.color+"66":"#E8EDF2"}`, transition:"all 0.4s ease" }}>
-                    {on ? (<><div style={{ fontSize:12, color:emp.shift.color, fontWeight:700 }}>✓</div><div style={{ fontSize:8, color:emp.shift.color, fontWeight:800, letterSpacing:"0.05em" }}>{emp.shift.id}</div><div style={{ fontSize:8, color:"#9CA3AF", fontWeight:500 }}>WORK</div></>) : (<div style={{ fontSize:9, color:"#CBD5E1", fontWeight:500 }}>OFF</div>)}
+                    {on ? (<><div style={{ fontSize:12, color:emp.shift.color, fontWeight:700 }}>✓</div><div style={{ fontSize:8, color:emp.shift.color, fontWeight:800, letterSpacing:"0.05em" }}>{emp.shift.id}</div><div style={{ fontSize:8, color:"#7a8fa8", fontWeight:500 }}>WORK</div></>) : (<div style={{ fontSize:9, color:"#CBD5E1", fontWeight:500 }}>OFF</div>)}
                   </div>
                 </div>
               );
@@ -320,7 +348,7 @@ function EmployeeDetail({ emp, factory, onClose, onApply }) {
           </div>
         </div>
 
-        <div style={{ background:"#F8F9FA", border:`1px solid ${C.border}`, borderRadius:10, padding:14, marginBottom:16 }}>
+        <div style={{ background:"#f0f4f9", border:`1px solid ${C.border}`, borderRadius:10, padding:14, marginBottom:16 }}>
           <div style={{ display:"flex", justifyContent:"space-between", marginBottom:8 }}>
             <span style={{ fontSize:10, fontWeight:700, color:C.muted, textTransform:"uppercase", letterSpacing:"0.1em" }}>Weekly Hours</span>
             <span style={{ fontWeight:800, fontSize:16, color:overtimeHrs>50?C.accent:overtimeHrs>44?C.gold:C.green, transition:"color 0.4s" }}>{overtimeHrs}h / week</span>
@@ -333,7 +361,7 @@ function EmployeeDetail({ emp, factory, onClose, onApply }) {
           </div>
         </div>
 
-        <div style={{ background:"#F8F9FA", border:`1px solid ${C.border}`, borderRadius:10, padding:16 }}>
+        <div style={{ background:"#f0f4f9", border:`1px solid ${C.border}`, borderRadius:10, padding:16 }}>
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
             <span style={{ fontSize:11, fontWeight:700, color:C.muted, textTransform:"uppercase", letterSpacing:"0.08em" }}>⚡ AI Action Plan</span>
             <button onClick={fetchAI} disabled={aiLoading} style={{ padding:"5px 14px", fontSize:11, fontWeight:700, background:aiLoading?C.surfaceAlt:C.accent, border:"none", borderRadius:6, color:"#fff", cursor:aiLoading?"not-allowed":"pointer" }}>
@@ -343,12 +371,12 @@ function EmployeeDetail({ emp, factory, onClose, onApply }) {
           {aiLoading && (
             <div style={{ display:"flex", gap:6, alignItems:"center", padding:"8px 0" }}>
               {[0,1,2].map(i=><div key={i} style={{ width:8,height:8,borderRadius:"50%",background:C.accent,animation:`bounce 1s ease-in-out ${i*0.2}s infinite` }} />)}
-              <span style={{ color:"#6B7280", fontSize:12 }}>Generating action plan…</span>
+              <span style={{ color:"#7a8fa8", fontSize:12 }}>Generating action plan…</span>
             </div>
           )}
           {aiError && <div style={{ color:C.accent, fontSize:12, padding:"8px 0" }}>{aiError}</div>}
           {!actions.length && !aiLoading && !aiError && (
-            <div style={{ color:"#6B7280", fontSize:12, textAlign:"center", padding:"10px 0" }}>Generate an AI action plan to see recommended interventions</div>
+            <div style={{ color:"#7a8fa8", fontSize:12, textAlign:"center", padding:"10px 0" }}>Generate an AI action plan to see recommended interventions</div>
           )}
           {actions.map(action => {
             const applied = appliedSet.has(action.id);
@@ -430,15 +458,15 @@ function EmployeeRoster({ factory, highlightRisk, onClose }) {
   const avgOT      = useMemo(() => (allEmployees.reduce((s,e)=>s+e.overtimeHrs,0)/allEmployees.length).toFixed(1), [allEmployees]);
 
   return (
-    <div style={{ position:"fixed", inset:0, zIndex:200, background:"#F5F7FA", display:"flex", flexDirection:"column", animation:"fadeIn 0.2s ease" }}>
+    <div style={{ position:"fixed", inset:0, zIndex:200, background:"#f0f4f9", display:"flex", flexDirection:"column", animation:"fadeIn 0.2s ease" }}>
 
       {/* ── top bar ── */}
       <div style={{ padding:"16px 28px", borderBottom:`1px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"space-between", background:"#FFFFFF", borderBottom:"1px solid #EDEDED", flexShrink:0 }}>
         <div style={{ display:"flex", alignItems:"center", gap:14 }}>
-          <button onClick={onClose} style={{ background:"#F8F9FA", border:`1px solid ${C.border}`, borderRadius:8, padding:"7px 16px", color:"#1A1A1A", fontSize:13, cursor:"pointer", fontWeight:700 }}>← Back</button>
+          <button onClick={onClose} style={{ background:"#f0f4f9", border:`1px solid ${C.border}`, borderRadius:8, padding:"7px 16px", color:"#0d1f35", fontSize:13, cursor:"pointer", fontWeight:700 }}>← Back</button>
           <div>
             <div style={{ fontWeight:800, fontSize:17 }}>{factory.name} — Full Workforce Roster</div>
-            <div style={{ color:"#6B7280", fontSize:12 }}>{factory.country} · {factory.zone} · {factory.id} · {(sfData ? sfData.length : factory.workers).toLocaleString()} employees</div>
+            <div style={{ color:"#7a8fa8", fontSize:12 }}>{factory.country} · {factory.zone} · {factory.id} · {(sfData ? sfData.length : factory.workers).toLocaleString()} employees</div>
           </div>
         </div>
         <div style={{ display:"flex", gap:8 }}>
@@ -451,7 +479,7 @@ function EmployeeRoster({ factory, highlightRisk, onClose }) {
       {/* ── SF status banner ── */}
       {sfLoading && (
         <div style={{ margin:"12px 28px 0", padding:"10px 16px", background:"#E6F4FF", border:"1px solid #91CAFF", borderRadius:8, display:"flex", alignItems:"center", gap:10, fontSize:12 }}>
-          <div style={{ display:"flex", gap:5 }}>{[0,1,2].map(i=><div key={i} style={{ width:7,height:7,borderRadius:"50%",background:"#005695",animation:`bounce 1s ease-in-out ${i*0.2}s infinite` }}/>)}</div>
+          <div style={{ display:"flex", gap:5 }}>{[0,1,2].map(i=><div key={i} style={{ width:7,height:7,borderRadius:"50%",background:"#0a3161",animation:`bounce 1s ease-in-out ${i*0.2}s infinite` }}/>)}</div>
           <span style={{ color:"#005695", fontWeight:600 }}>Loading employees from database…</span>
         </div>
       )}
@@ -475,9 +503,9 @@ function EmployeeRoster({ factory, highlightRisk, onClose }) {
           { label:"Night Shift Workers",  value:nightCount.toLocaleString(),        accent:C.purple },
           { label:"Avg Overtime hrs/wk",  value:avgOT,                             accent:C.gold },
         ].map(k=>(
-          <div key={k.label} style={{ background:"#F8F9FA", border:`1px solid ${C.border}`, borderRadius:10, padding:"11px 16px", borderLeft:`3px solid ${k.accent}` }}>
-            <div style={{ color:"#9CA3AF", fontSize:10, fontWeight:600, letterSpacing:"0.06em", textTransform:"uppercase", marginBottom:3 }}>{k.label}</div>
-            <div style={{ color:"#1A1A1A", fontSize:22, fontWeight:800 }}>{k.value}</div>
+          <div key={k.label} style={{ background:"#f0f4f9", border:`1px solid ${C.border}`, borderRadius:10, padding:"11px 16px", borderLeft:`3px solid ${k.accent}` }}>
+            <div style={{ color:"#7a8fa8", fontSize:10, fontWeight:600, letterSpacing:"0.06em", textTransform:"uppercase", marginBottom:3 }}>{k.label}</div>
+            <div style={{ color:"#0d1f35", fontSize:22, fontWeight:800 }}>{k.value}</div>
           </div>
         ))}
       </div>
@@ -485,18 +513,18 @@ function EmployeeRoster({ factory, highlightRisk, onClose }) {
       {/* ── filter bar ── */}
       <div style={{ padding:"10px 28px", borderBottom:`1px solid ${C.border}`, display:"flex", gap:10, alignItems:"center", flexWrap:"wrap", background:"#FFFFFF", borderBottom:"1px solid #EDEDED", flexShrink:0 }}>
         <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search name, role, ID, department…"
-          style={{ flex:"1 1 220px", padding:"8px 14px", fontSize:13, background:"#FFFFFF", border:"1px solid #E2E8F0", borderRadius:8, color:"#374151", outline:"none" }} />
+          style={{ flex:"1 1 220px", padding:"8px 14px", fontSize:13, background:"#FFFFFF", border:"1px solid #E2E8F0", borderRadius:8, color:"#3a5068", outline:"none" }} />
         {[
           { val:filterShift, set:setFilterShift, opts:[["ALL","All Shifts"],["A","Morning 06–14"],["B","Afternoon 14–22"],["C","Night 22–06"]] },
           { val:filterRisk,  set:setFilterRisk,  opts:[["ALL","All Risk"],["HIGH","High Risk"],["MEDIUM","Medium"],["LOW","Low"]] },
           { val:filterDept,  set:setFilterDept,  opts:[["ALL","All Depts"],...DEPTS.map(d=>[d,d])] },
         ].map((f,i)=>(
           <select key={i} value={f.val} onChange={e=>f.set(e.target.value)}
-            style={{ padding:"8px 12px", fontSize:12, background:"#FFFFFF", border:"1px solid #E2E8F0", borderRadius:8, color:"#374151", outline:"none", cursor:"pointer" }}>
+            style={{ padding:"8px 12px", fontSize:12, background:"#FFFFFF", border:"1px solid #E2E8F0", borderRadius:8, color:"#3a5068", outline:"none", cursor:"pointer" }}>
             {f.opts.map(([v,l])=><option key={v} value={v}>{l}</option>)}
           </select>
         ))}
-        <span style={{ color:"#6B7280", fontSize:12, marginLeft:"auto", whiteSpace:"nowrap" }}>
+        <span style={{ color:"#7a8fa8", fontSize:12, marginLeft:"auto", whiteSpace:"nowrap" }}>
           {filtered.length.toLocaleString()} of {factory.workers.toLocaleString()} shown
         </span>
       </div>
@@ -506,10 +534,10 @@ function EmployeeRoster({ factory, highlightRisk, onClose }) {
         {/* TABLE */}
         <div style={{ flex:1, overflowY:"auto" }}>
           <table style={{ width:"100%", borderCollapse:"collapse" }}>
-            <thead style={{ position:"sticky", top:0, zIndex:10, background:"#F8F9FA" }}>
+            <thead style={{ position:"sticky", top:0, zIndex:10, background:"#f0f4f9" }}>
               <tr>
                 {["Employee","Role / Department","Schedule","Working Days","Hrs/Wk","Risk","Safety Score",""].map(h=>(
-                  <th key={h} style={{ padding:"10px 16px", textAlign:"left", fontSize:10, fontWeight:600, color:"#94A3B8", letterSpacing:"0.08em", textTransform:"uppercase", borderBottom:"2px solid #F1F5F9", whiteSpace:"nowrap", background:"#F8FAFC" }}>{h}</th>
+                  <th key={h} style={{ padding:"10px 16px", textAlign:"left", fontSize:10, fontWeight:600, color:"#7a8fa8", letterSpacing:"0.06em", textTransform:"uppercase", borderBottom:"1px solid rgba(10,49,97,0.09)", whiteSpace:"nowrap", background:"#f0f4f9" }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -521,8 +549,8 @@ function EmployeeRoster({ factory, highlightRisk, onClose }) {
                 const active = selectedEmp?.id === emp.id;
                 return (
                   <tr key={emp.id} onClick={()=>setSelectedEmp(active?null:emp)}
-                    style={{ borderBottom:"1px solid #F0F0F0", cursor:"pointer", background:active?"#EBF4FF":"transparent", transition:"background 0.1s" }}
-                    onMouseOver={e=>{ if(!active) e.currentTarget.style.background="#F8FBFF"; }}
+                    style={{ borderBottom:"1px solid rgba(10,49,97,0.07)", cursor:"pointer", background:active?"#EBF4FF":"transparent", transition:"background 0.1s" }}
+                    onMouseOver={e=>{ if(!active) e.currentTarget.style.background="#f7fafd"; }}
                     onMouseOut={e=>{ if(!active) e.currentTarget.style.background="transparent"; }}>
 
                     {/* Employee */}
@@ -530,15 +558,15 @@ function EmployeeRoster({ factory, highlightRisk, onClose }) {
                       <div style={{ display:"flex", alignItems:"center", gap:10 }}>
                         <div style={{ width:34, height:34, borderRadius:"50%", background:`hsl(${hue},70%,92%)`, border:`1.5px solid hsl(${hue},60%,82%)`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, color:`hsl(${hue},70%,32%)`, flexShrink:0 }}>{emp.avatar}</div>
                         <div>
-                          <div style={{ fontWeight:600, fontSize:13, color:"#1A1A1A" }}>{emp.name}</div>
-                          <div style={{ color:"#9CA3AF", fontSize:10 }}>{emp.id} · {emp.tenure}mo</div>
+                          <div style={{ fontWeight:600, fontSize:13, color:"#0d1f35" }}>{emp.name}</div>
+                          <div style={{ color:"#7a8fa8", fontSize:10 }}>{emp.id} · {emp.tenure}mo</div>
                         </div>
                       </div>
                     </td>
 
                     {/* Role */}
                     <td style={{ padding:"11px 16px" }}>
-                      <div style={{ fontSize:12, fontWeight:500, color:"#374151" }}>{emp.role}</div>
+                      <div style={{ fontSize:12, fontWeight:500, color:"#3a5068" }}>{emp.role}</div>
                       <div style={{ fontSize:11, color:"#94A3B8" }}>{emp.dept}</div>
                     </td>
 
@@ -568,7 +596,7 @@ function EmployeeRoster({ factory, highlightRisk, onClose }) {
                     {/* Overtime */}
                     <td style={{ padding:"11px 16px", whiteSpace:"nowrap" }}>
                       <span style={{ fontSize:15, fontWeight:800, color:rowEmp.overtimeHrs>50?"#CF1322":rowEmp.overtimeHrs>44?"#D46B08":"#389E0D", transition:"color 0.4s", fontWeight:700 }}>{rowEmp.overtimeHrs}h</span>
-                      <span style={{ color:"#9CA3AF", fontSize:10 }}>/wk</span>
+                      <span style={{ color:"#7a8fa8", fontSize:10 }}>/wk</span>
                     </td>
 
                     {/* Fatigue risk */}
@@ -589,7 +617,7 @@ function EmployeeRoster({ factory, highlightRisk, onClose }) {
                     {/* CTA */}
                     <td style={{ padding:"11px 16px" }}>
                       <button onClick={e=>{ e.stopPropagation(); setSelectedEmp(active?null:emp); }}
-                        style={{ padding:"5px 14px", fontSize:11, fontWeight:600, background:active?"#F0F4F8":"#005695", border:`1px solid ${active?"#D0D0D0":"#005695"}`, borderRadius:5, color:active?"#6B7280":"#FFFFFF", cursor:"pointer", whiteSpace:"nowrap", letterSpacing:"0.02em" }}>
+                        style={{ padding:"5px 14px", fontSize:11, fontWeight:600, background:active?"#f0f4f9":"#0a3161", border:`1px solid ${active?"rgba(10,49,97,0.12)":"#0a3161"}` , borderRadius:5, color:active?"#6B7280":"#FFFFFF", cursor:"pointer", whiteSpace:"nowrap", letterSpacing:"0.02em" }}>
                         {active?"Close":"View →"}
                       </button>
                     </td>
@@ -600,7 +628,7 @@ function EmployeeRoster({ factory, highlightRisk, onClose }) {
           </table>
 
           {pageEmps.length === 0 && (
-            <div style={{ textAlign:"center", padding:60, color:"#9CA3AF" }}>No employees match your filters.</div>
+            <div style={{ textAlign:"center", padding:60, color:"#7a8fa8" }}>No employees match your filters.</div>
           )}
         </div>
 
@@ -617,14 +645,14 @@ function EmployeeRoster({ factory, highlightRisk, onClose }) {
           </span>
           <div style={{ display:"flex", gap:5 }}>
             {[["«",()=>setPage(0),page===0],["‹",()=>setPage(p=>Math.max(0,p-1)),page===0]].map(([l,fn,dis])=>(
-              <button key={l} onClick={fn} disabled={dis} style={{ padding:"5px 10px", fontSize:12, background:"#F8F9FA", border:`1px solid ${C.border}`, borderRadius:6, color:C.text, cursor:dis?"not-allowed":"pointer", opacity:dis?0.4:1 }}>{l}</button>
+              <button key={l} onClick={fn} disabled={dis} style={{ padding:"5px 10px", fontSize:12, background:"#f0f4f9", border:`1px solid ${C.border}`, borderRadius:6, color:C.text, cursor:dis?"not-allowed":"pointer", opacity:dis?0.4:1 }}>{l}</button>
             ))}
             {Array.from({ length:Math.min(7,totalPages) }, (_,i)=>{
               const p = Math.max(0,Math.min(totalPages-7,page-3))+i;
               return <button key={p} onClick={()=>setPage(p)} style={{ padding:"5px 10px", fontSize:12, background:p===page?C.accent:C.surfaceAlt, border:`1px solid ${p===page?C.accent:C.border}`, borderRadius:6, color:"#fff", cursor:"pointer", fontWeight:p===page?700:400 }}>{p+1}</button>;
             })}
             {[["›",()=>setPage(p=>Math.min(totalPages-1,p+1)),page===totalPages-1],["»",()=>setPage(totalPages-1),page===totalPages-1]].map(([l,fn,dis])=>(
-              <button key={l} onClick={fn} disabled={dis} style={{ padding:"5px 10px", fontSize:12, background:"#F8F9FA", border:`1px solid ${C.border}`, borderRadius:6, color:C.text, cursor:dis?"not-allowed":"pointer", opacity:dis?0.4:1 }}>{l}</button>
+              <button key={l} onClick={fn} disabled={dis} style={{ padding:"5px 10px", fontSize:12, background:"#f0f4f9", border:`1px solid ${C.border}`, borderRadius:6, color:C.text, cursor:dis?"not-allowed":"pointer", opacity:dis?0.4:1 }}>{l}</button>
             ))}
           </div>
         </div>
@@ -802,17 +830,17 @@ Generate a concise board-level safety briefing with: 1) Overall risk status 2) T
       {/* Header */}
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:20 }}>
         <div>
-          <h2 style={{ fontSize:20, fontWeight:700, color:"#1A1A1A", margin:"0 0 4px" }}>🛡 Safety Intelligence Hub</h2>
-          <p style={{ fontSize:13, color:"#6B7280", margin:0 }}>Live safety data from database · {incidents.length} incidents tracked · {sfAbsences.length} SF absence records</p>
+          <h2 style={{ fontSize:18, fontWeight:600, color:"#0d1f35", margin:"0 0 4px" }}>🛡 Safety Intelligence Hub</h2>
+          <p style={{ fontSize:13, color:"#7a8fa8", margin:0 }}>Live safety data from database · {incidents.length} incidents tracked · {sfAbsences.length} SF absence records</p>
         </div>
         <div style={{ display:"flex", gap:10, alignItems:"center" }}>
           <select value={selFactory} onChange={e=>setSelFactory(e.target.value)}
-            style={{ padding:"7px 12px", fontSize:12, background:"#FFFFFF", border:"1px solid #E2E8F0", borderRadius:8, color:"#374151" }}>
+            style={{ padding:"7px 12px", fontSize:12, background:"#FFFFFF", border:"1px solid #E2E8F0", borderRadius:8, color:"#3a5068" }}>
             <option value="ALL">All Factories</option>
             {factories.map(f=><option key={f.id} value={f.id}>{f.name}</option>)}
           </select>
           <button onClick={()=>setShowAdd(s=>!s)}
-            style={{ padding:"7px 16px", fontSize:12, fontWeight:600, background:"#E8312A", border:"none", borderRadius:8, color:"#fff", cursor:"pointer" }}>
+            style={{ padding:"7px 16px", fontSize:12, fontWeight:600, background:"#0a3161", border:"none", borderRadius:8, color:"#fff", cursor:"pointer" }}>
             + Report Incident
           </button>
         </div>
@@ -822,20 +850,20 @@ Generate a concise board-level safety briefing with: 1) Overall risk status 2) T
 
       {/* Report incident form */}
       {showAdd && (
-        <div style={{ background:"#FFFFFF", border:"1px solid #EDEDED", borderRadius:12, padding:20, marginBottom:20, boxShadow:"0 1px 4px rgba(0,0,0,0.06)" }}>
-          <div style={{ fontWeight:700, fontSize:14, marginBottom:16, color:"#1A1A1A" }}>📋 Report New Safety Incident</div>
+        <div style={{ background:"#ffffff", border:"1px solid rgba(10,49,97,0.09)", borderRadius:10, padding:20, marginBottom:20, boxShadow:"0 2px 12px rgba(10,49,97,0.08)" }}>
+          <div style={{ fontWeight:700, fontSize:14, marginBottom:16, color:"#0d1f35" }}>📋 Report New Safety Incident</div>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12, marginBottom:12 }}>
             {[["incident_name","Incident Title","text"],["description","Description","text"]].map(([k,lbl,type])=>(
               <div key={k}>
-                <label style={{ fontSize:11, fontWeight:600, color:"#6B7280", textTransform:"uppercase", letterSpacing:"0.06em", display:"block", marginBottom:4 }}>{lbl}</label>
+                <label style={{ fontSize:11, fontWeight:600, color:"#3a5068", textTransform:"uppercase", letterSpacing:"0.06em", display:"block", marginBottom:4 }}>{lbl}</label>
                 <input value={form[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))}
-                  style={{ width:"100%", padding:"8px 12px", fontSize:13, background:"#F8F9FA", border:"1px solid #E2E8F0", borderRadius:7, color:"#1A1A1A", outline:"none", boxSizing:"border-box" }} />
+                  style={{ width:"100%", padding:"8px 12px", fontSize:13, background:"#f0f4f9", border:"1px solid #E2E8F0", borderRadius:7, color:"#0d1f35", outline:"none", boxSizing:"border-box" }} />
               </div>
             ))}
             <div>
-              <label style={{ fontSize:11, fontWeight:600, color:"#6B7280", textTransform:"uppercase", letterSpacing:"0.06em", display:"block", marginBottom:4 }}>Days Lost</label>
+              <label style={{ fontSize:11, fontWeight:600, color:"#3a5068", textTransform:"uppercase", letterSpacing:"0.06em", display:"block", marginBottom:4 }}>Days Lost</label>
               <input type="number" value={form.quantity_days} onChange={e=>setForm(f=>({...f,quantity_days:Number(e.target.value)}))}
-                style={{ width:"100%", padding:"8px 12px", fontSize:13, background:"#F8F9FA", border:"1px solid #E2E8F0", borderRadius:7, color:"#1A1A1A", outline:"none", boxSizing:"border-box" }} />
+                style={{ width:"100%", padding:"8px 12px", fontSize:13, background:"#f0f4f9", border:"1px solid #E2E8F0", borderRadius:7, color:"#0d1f35", outline:"none", boxSizing:"border-box" }} />
             </div>
           </div>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12, marginBottom:16 }}>
@@ -845,17 +873,17 @@ Generate a concise board-level safety briefing with: 1) Overall risk status 2) T
               ["incident_type","Type",[["SICK","Sick Leave"],["INJURY","Injury"],["ACCIDENT","Accident"],["NEAR_MISS","Near Miss"],["LOA","Leave of Absence"],["OTHER","Other"]]],
             ].map(([k,lbl,opts])=>(
               <div key={k}>
-                <label style={{ fontSize:11, fontWeight:600, color:"#6B7280", textTransform:"uppercase", letterSpacing:"0.06em", display:"block", marginBottom:4 }}>{lbl}</label>
+                <label style={{ fontSize:11, fontWeight:600, color:"#3a5068", textTransform:"uppercase", letterSpacing:"0.06em", display:"block", marginBottom:4 }}>{lbl}</label>
                 <select value={form[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))}
-                  style={{ width:"100%", padding:"8px 12px", fontSize:13, background:"#F8F9FA", border:"1px solid #E2E8F0", borderRadius:7, color:"#1A1A1A", outline:"none", boxSizing:"border-box" }}>
+                  style={{ width:"100%", padding:"8px 12px", fontSize:13, background:"#f0f4f9", border:"1px solid #E2E8F0", borderRadius:7, color:"#0d1f35", outline:"none", boxSizing:"border-box" }}>
                   {opts.map(([v,l])=><option key={v} value={v}>{l}</option>)}
                 </select>
               </div>
             ))}
           </div>
           <div style={{ display:"flex", gap:10 }}>
-            <button onClick={submitIncident} style={{ padding:"8px 20px", fontSize:13, fontWeight:600, background:"#E8312A", border:"none", borderRadius:7, color:"#fff", cursor:"pointer" }}>Submit Incident</button>
-            <button onClick={()=>setShowAdd(false)} style={{ padding:"8px 14px", fontSize:13, fontWeight:600, background:"#F5F5F5", border:"1px solid #E0E0E0", borderRadius:7, color:"#6B7280", cursor:"pointer" }}>Cancel</button>
+            <button onClick={submitIncident} style={{ padding:"8px 20px", fontSize:13, fontWeight:600, background:"#0a3161", border:"none", borderRadius:7, color:"#fff", cursor:"pointer" }}>Submit Incident</button>
+            <button onClick={()=>setShowAdd(false)} style={{ padding:"8px 14px", fontSize:13, fontWeight:600, background:"#F5F5F5", border:"1px solid #E0E0E0", borderRadius:7, color:"#3a5068", cursor:"pointer" }}>Cancel</button>
           </div>
         </div>
       )}
@@ -873,33 +901,33 @@ Generate a concise board-level safety briefing with: 1) Overall risk status 2) T
               { label:"Fatigue Alerts",    value:fatigueData.filter(f=>!f.resolved).length, accent:"#6D28D9", sub:"Active alerts" },
               { label:"SF Absence Cases",  value:sfAbsences.length,             accent:"#005695",  sub:"From SuccessFactors" },
             ].map(k=>(
-              <div key={k.label} style={{ background:"#FFFFFF", border:"1px solid #EDEDED", borderRadius:10, padding:"14px 16px", borderLeft:"3px solid "+k.accent, boxShadow:"0 1px 3px rgba(0,0,0,0.04)" }}>
-                <div style={{ fontSize:10, fontWeight:600, color:"#9CA3AF", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:4 }}>{k.label}</div>
-                <div style={{ fontSize:24, fontWeight:700, color:"#1A1A1A" }}>{k.value}</div>
-                <div style={{ fontSize:11, color:"#9CA3AF", marginTop:2 }}>{k.sub}</div>
+              <div key={k.label} style={{ background:"#FFFFFF", border:"1px solid rgba(10,49,97,0.09)", borderRadius:10, padding:"14px 16px", borderLeft:"3px solid "+k.accent, boxShadow:"0 2px 8px rgba(10,49,97,0.06)" }}>
+                <div style={{ fontSize:10, fontWeight:600, color:"#7a8fa8", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:4 }}>{k.label}</div>
+                <div style={{ fontSize:24, fontWeight:700, color:"#0d1f35", fontFamily:"'JetBrains Mono',monospace" }}>{k.value}</div>
+                <div style={{ fontSize:11, color:"#7a8fa8", marginTop:2 }}>{k.sub}</div>
               </div>
             ))}
           </div>
 
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:16 }}>
             {/* Factory Safety Scorecard */}
-            <div style={{ background:"#FFFFFF", border:"1px solid #EDEDED", borderRadius:12, overflow:"hidden", boxShadow:"0 1px 4px rgba(0,0,0,0.06)" }}>
-              <div style={{ padding:"13px 16px", borderBottom:"1px solid #F0F0F0", fontWeight:700, fontSize:14, color:"#1A1A1A" }}>Factory Safety Scorecard</div>
+            <div style={{ background:"#FFFFFF", border:"1px solid rgba(10,49,97,0.09)", borderRadius:12, overflow:"hidden", boxShadow:"0 2px 12px rgba(10,49,97,0.06)" }}>
+              <div style={{ padding:"13px 16px", borderBottom:"1px solid rgba(10,49,97,0.07)", fontWeight:700, fontSize:14, color:"#0d1f35" }}>Factory Safety Scorecard</div>
               <div style={{ padding:"4px 0" }}>
                 {Object.values(factorySafety).sort((a,b)=>a.score-b.score).map(f=>(
-                  <div key={f.id} style={{ padding:"10px 16px", borderBottom:"1px solid #F8F8F8", display:"flex", alignItems:"center", gap:12 }}>
+                  <div key={f.id} style={{ padding:"10px 16px", borderBottom:"1px solid rgba(10,49,97,0.05)", display:"flex", alignItems:"center", gap:12 }}>
                     <div style={{ width:40, height:40, borderRadius:8, background:LEVEL_COL[f.level]+"18", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
                       <span style={{ fontSize:11, fontWeight:800, color:LEVEL_COL[f.level] }}>{f.score}</span>
                     </div>
                     <div style={{ flex:1 }}>
                       <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}>
-                        <span style={{ fontSize:12, fontWeight:600, color:"#1A1A1A" }}>{f.name}</span>
+                        <span style={{ fontSize:12, fontWeight:600, color:"#0d1f35" }}>{f.name}</span>
                         <Badge label={f.level} color={f.level==="CRITICAL"||f.level==="HIGH"?"red":f.level==="MEDIUM"?"yellow":"green"} />
                       </div>
                       <div style={{ height:5, background:"#F0F0F0", borderRadius:99, overflow:"hidden" }}>
                         <div style={{ width:f.score+"%", height:"100%", background:LEVEL_COL[f.level], borderRadius:99, transition:"width 0.6s ease" }} />
                       </div>
-                      <div style={{ fontSize:10, color:"#9CA3AF", marginTop:3 }}>
+                      <div style={{ fontSize:10, color:"#7a8fa8", marginTop:3 }}>
                         {f.openInc} open · {f.critInc} critical · {f.highFat} fatigue alerts
                       </div>
                     </div>
@@ -909,13 +937,13 @@ Generate a concise board-level safety briefing with: 1) Overall risk status 2) T
             </div>
 
             {/* SF Absence Patterns */}
-            <div style={{ background:"#FFFFFF", border:"1px solid #EDEDED", borderRadius:12, overflow:"hidden", boxShadow:"0 1px 4px rgba(0,0,0,0.06)" }}>
-              <div style={{ padding:"13px 16px", borderBottom:"1px solid #F0F0F0", fontWeight:700, fontSize:14, color:"#1A1A1A", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+            <div style={{ background:"#FFFFFF", border:"1px solid rgba(10,49,97,0.09)", borderRadius:12, overflow:"hidden", boxShadow:"0 2px 12px rgba(10,49,97,0.06)" }}>
+              <div style={{ padding:"13px 16px", borderBottom:"1px solid rgba(10,49,97,0.07)", fontWeight:700, fontSize:14, color:"#0d1f35", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                 <span>SF Absence Patterns</span>
                 <Badge label="Live SF Data" color="blue" />
               </div>
               <div style={{ padding:16 }}>
-                {sfGrouped.length===0 && <div style={{ color:"#9CA3AF", fontSize:13 }}>No SF absence data</div>}
+                {sfGrouped.length===0 && <div style={{ color:"#7a8fa8", fontSize:13 }}>No SF absence data</div>}
                 {sfGrouped.map((g,i)=>{
                   const max = sfGrouped[0]?.count||1;
                   const isRisk = g.name.toUpperCase().includes("SICK")||g.name.toUpperCase().includes("ILL")||g.name.toUpperCase().includes("INJURY");
@@ -923,8 +951,8 @@ Generate a concise board-level safety briefing with: 1) Overall risk status 2) T
                   return (
                     <div key={i} style={{ marginBottom:12 }}>
                       <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}>
-                        <span style={{ fontSize:12, fontWeight:600, color:"#1A1A1A" }}>{g.name}</span>
-                        <span style={{ fontSize:11, color:"#6B7280" }}>{g.count} cases · {g.employees.size} employees · {g.days.toFixed(0)} days</span>
+                        <span style={{ fontSize:12, fontWeight:600, color:"#0d1f35" }}>{g.name}</span>
+                        <span style={{ fontSize:11, color:"#3a5068" }}>{g.count} cases · {g.employees.size} employees · {g.days.toFixed(0)} days</span>
                       </div>
                       <div style={{ height:6, background:"#F0F0F0", borderRadius:99, overflow:"hidden" }}>
                         <div style={{ width:(g.count/max*100)+"%", height:"100%", background:col, borderRadius:99, transition:"width 0.6s" }} />
@@ -937,39 +965,39 @@ Generate a concise board-level safety briefing with: 1) Overall risk status 2) T
           </div>
 
           {/* Incidents Table */}
-          <div style={{ background:"#FFFFFF", border:"1px solid #EDEDED", borderRadius:12, overflow:"hidden", boxShadow:"0 1px 4px rgba(0,0,0,0.06)", marginBottom:16 }}>
-            <div style={{ padding:"13px 16px", borderBottom:"1px solid #F0F0F0", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-              <span style={{ fontWeight:700, fontSize:14, color:"#1A1A1A" }}>Incident Log — {filtered.length} records</span>
+          <div style={{ background:"#FFFFFF", border:"1px solid rgba(10,49,97,0.09)", borderRadius:12, overflow:"hidden", boxShadow:"0 2px 12px rgba(10,49,97,0.06)", marginBottom:16 }}>
+            <div style={{ padding:"13px 16px", borderBottom:"1px solid rgba(10,49,97,0.07)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+              <span style={{ fontWeight:700, fontSize:14, color:"#0d1f35" }}>Incident Log — {filtered.length} records</span>
               <div style={{ display:"flex", gap:6 }}>
                 <Badge label={open.length+" OPEN"} color="red" />
                 <Badge label={resolved.length+" RESOLVED"} color="green" />
               </div>
             </div>
             {filtered.length===0 ? (
-              <div style={{ padding:32, textAlign:"center", color:"#9CA3AF", fontSize:13 }}>
+              <div style={{ padding:32, textAlign:"center", color:"#7a8fa8", fontSize:13 }}>
                 No incidents recorded yet. Click "Report Incident" to log the first one.
               </div>
             ) : (
               <table style={{ width:"100%", borderCollapse:"collapse" }}>
                 <thead>
-                  <tr style={{ background:"#F8FAFC" }}>
+                  <tr style={{ background:"#f0f4f9" }}>
                     {["Incident","Factory","Type","Severity","Days","Date","Status","Action"].map(h=>(
-                      <th key={h} style={{ padding:"9px 14px", textAlign:"left", fontSize:10, fontWeight:600, color:"#94A3B8", letterSpacing:"0.08em", textTransform:"uppercase", borderBottom:"2px solid #F1F5F9" }}>{h}</th>
+                      <th key={h} style={{ padding:"9px 14px", textAlign:"left", fontSize:10, fontWeight:600, color:"#7a8fa8", letterSpacing:"0.06em", textTransform:"uppercase", borderBottom:"1px solid rgba(10,49,97,0.09)" }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.slice(0,15).map(inc=>(
-                    <tr key={inc.id} style={{ borderBottom:"1px solid #F0F0F0" }}>
+                    <tr key={inc.id} style={{ borderBottom:"1px solid rgba(10,49,97,0.07)" }}>
                       <td style={{ padding:"10px 14px" }}>
-                        <div style={{ fontSize:12, fontWeight:600, color:"#1A1A1A" }}>{inc.incident_name||inc.incident_type}</div>
-                        {inc.description && <div style={{ fontSize:11, color:"#9CA3AF", marginTop:1 }}>{inc.description.slice(0,40)}{inc.description.length>40?"…":""}</div>}
+                        <div style={{ fontSize:12, fontWeight:600, color:"#0d1f35" }}>{inc.incident_name||inc.incident_type}</div>
+                        {inc.description && <div style={{ fontSize:11, color:"#7a8fa8", marginTop:1 }}>{inc.description.slice(0,40)}{inc.description.length>40?"…":""}</div>}
                       </td>
-                      <td style={{ padding:"10px 14px", fontSize:12, color:"#374151" }}>{factories.find(f=>f.id===inc.factory_id)?.name||inc.factory_id}</td>
-                      <td style={{ padding:"10px 14px", fontSize:11, color:"#6B7280" }}>{inc.incident_type}</td>
+                      <td style={{ padding:"10px 14px", fontSize:12, color:"#3a5068" }}>{factories.find(f=>f.id===inc.factory_id)?.name||inc.factory_id}</td>
+                      <td style={{ padding:"10px 14px", fontSize:11, color:"#3a5068" }}>{inc.incident_type}</td>
                       <td style={{ padding:"10px 14px" }}><Badge label={inc.severity} color={SEVERITY_COLOR[inc.severity]||"blue"} /></td>
-                      <td style={{ padding:"10px 14px", fontSize:12, color:"#374151" }}>{inc.quantity_days}d</td>
-                      <td style={{ padding:"10px 14px", fontSize:11, color:"#9CA3AF" }}>{inc.incident_date?.slice(0,10)||"—"}</td>
+                      <td style={{ padding:"10px 14px", fontSize:12, color:"#3a5068" }}>{inc.quantity_days}d</td>
+                      <td style={{ padding:"10px 14px", fontSize:11, color:"#7a8fa8" }}>{inc.incident_date?.slice(0,10)||"—"}</td>
                       <td style={{ padding:"10px 14px" }}>
                         <Badge label={inc.status.toUpperCase()} color={inc.status==="open"?"red":"green"} />
                       </td>
@@ -989,11 +1017,11 @@ Generate a concise board-level safety briefing with: 1) Overall risk status 2) T
           </div>
 
           {/* AI Board Briefing */}
-          <div style={{ background:"#F8F9FA", border:"1px solid #EDEDED", borderRadius:12, padding:20, boxShadow:"0 1px 4px rgba(0,0,0,0.06)" }}>
+          <div style={{ background:"#f0f4f9", border:"1px solid #EDEDED", borderRadius:12, padding:20, boxShadow:"0 2px 12px rgba(10,49,97,0.08)" }}>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
               <div>
-                <div style={{ fontWeight:700, fontSize:14, color:"#1A1A1A" }}>⚡ AI Safety Board Briefing</div>
-                <div style={{ fontSize:11, color:"#9CA3AF", marginTop:2 }}>Powered by live DB + SF data · FSSC 22000 & NCE aligned</div>
+                <div style={{ fontWeight:700, fontSize:14, color:"#0d1f35" }}>⚡ AI Safety Board Briefing</div>
+                <div style={{ fontSize:11, color:"#7a8fa8", marginTop:2 }}>Powered by live DB + SF data · FSSC 22000 & NCE aligned</div>
               </div>
               <button onClick={generateReport} disabled={aiLoading}
                 style={{ padding:"8px 18px", fontSize:12, fontWeight:700, background:aiLoading?"#F5F5F5":"#E8312A", border:aiLoading?"1px solid #E0E0E0":"none", borderRadius:8, color:aiLoading?"#9CA3AF":"#fff", cursor:aiLoading?"not-allowed":"pointer" }}>
@@ -1003,12 +1031,12 @@ Generate a concise board-level safety briefing with: 1) Overall risk status 2) T
             {aiLoading && (
               <div style={{ display:"flex", gap:6, alignItems:"center", padding:"8px 0" }}>
                 {[0,1,2].map(i=><div key={i} style={{ width:7,height:7,borderRadius:"50%",background:"#E8312A",animation:`bounce 1s ease-in-out ${i*0.2}s infinite` }}/>)}
-                <span style={{ color:"#9CA3AF", fontSize:12 }}>Analysing cross-factory safety data…</span>
+                <span style={{ color:"#7a8fa8", fontSize:12 }}>Analysing cross-factory safety data…</span>
               </div>
             )}
-            {aiReport && <div style={{ fontSize:13, lineHeight:1.85, whiteSpace:"pre-wrap", color:"#1A1A1A" }}>{aiReport}</div>}
+            {aiReport && <div style={{ fontSize:13, lineHeight:1.85, whiteSpace:"pre-wrap", color:"#0d1f35" }}>{aiReport}</div>}
             {!aiReport && !aiLoading && (
-              <div style={{ color:"#9CA3AF", fontSize:13 }}>
+              <div style={{ color:"#7a8fa8", fontSize:13 }}>
                 Click "Generate Board Briefing" for a comprehensive AI safety report using live incident data, factory safety scores, fatigue alerts, and SF absence patterns — ready for board presentation.
               </div>
             )}
@@ -1104,16 +1132,16 @@ Provide: 1) Immediate actions for top 3 critical cases 2) Scheduling adjustments
     <div>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:20 }}>
         <div>
-          <h2 style={{ fontSize:20, fontWeight:700, color:"#1A1A1A", margin:"0 0 4px" }}>⚡ Fatigue Risk Intelligence</h2>
-          <p style={{ fontSize:13, color:"#6B7280", margin:0 }}>Live fatigue alerts from database · Auto-generated from SF work hours & overtime</p>
+          <h2 style={{ fontSize:18, fontWeight:600, color:"#0d1f35", margin:"0 0 4px" }}>⚡ Fatigue Risk Intelligence</h2>
+          <p style={{ fontSize:13, color:"#7a8fa8", margin:0 }}>Live fatigue alerts from database · Auto-generated from SF work hours & overtime</p>
         </div>
         <div style={{ display:"flex", gap:10, alignItems:"center" }}>
           <select value={selFactory} onChange={e=>setSelFactory(e.target.value)}
-            style={{ padding:"7px 12px", fontSize:12, background:"#FFFFFF", border:"1px solid #E2E8F0", borderRadius:8, color:"#374151" }}>
+            style={{ padding:"7px 12px", fontSize:12, background:"#FFFFFF", border:"1px solid #E2E8F0", borderRadius:8, color:"#3a5068" }}>
             <option value="ALL">All Factories</option>
             {factories.map(f=><option key={f.id} value={f.id}>{f.name}</option>)}
           </select>
-          <button onClick={load} style={{ padding:"7px 14px", fontSize:12, fontWeight:600, background:"#F5F5F5", border:"1px solid #E0E0E0", borderRadius:8, color:"#374151", cursor:"pointer" }}>↻ Refresh</button>
+          <button onClick={load} style={{ padding:"7px 14px", fontSize:12, fontWeight:600, background:"#F5F5F5", border:"1px solid #E0E0E0", borderRadius:8, color:"#3a5068", cursor:"pointer" }}>↻ Refresh</button>
         </div>
       </div>
 
@@ -1127,10 +1155,10 @@ Provide: 1) Immediate actions for top 3 critical cases 2) Scheduling adjustments
           { label:"High Risk",        value:high.length,        accent:"#D46B08", sub:"51–70pts fatigue" },
           { label:"Managers Notified",value:notified.size,      accent:"#389E0D", sub:"This session" },
         ].map(k=>(
-          <div key={k.label} style={{ background:"#FFFFFF", border:"1px solid #EDEDED", borderRadius:10, padding:"14px 16px", borderLeft:"3px solid "+k.accent, boxShadow:"0 1px 3px rgba(0,0,0,0.04)" }}>
-            <div style={{ fontSize:10, fontWeight:600, color:"#9CA3AF", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:4 }}>{k.label}</div>
-            <div style={{ fontSize:24, fontWeight:700, color:"#1A1A1A" }}>{k.value}</div>
-            <div style={{ fontSize:11, color:"#9CA3AF", marginTop:2 }}>{k.sub}</div>
+          <div key={k.label} style={{ background:"#FFFFFF", border:"1px solid rgba(10,49,97,0.09)", borderRadius:10, padding:"14px 16px", borderLeft:"3px solid "+k.accent, boxShadow:"0 2px 8px rgba(10,49,97,0.06)" }}>
+            <div style={{ fontSize:10, fontWeight:600, color:"#7a8fa8", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:4 }}>{k.label}</div>
+            <div style={{ fontSize:24, fontWeight:700, color:"#0d1f35", fontFamily:"'JetBrains Mono',monospace" }}>{k.value}</div>
+            <div style={{ fontSize:11, color:"#7a8fa8", marginTop:2 }}>{k.sub}</div>
           </div>
         ))}
       </div>
@@ -1140,14 +1168,14 @@ Provide: 1) Immediate actions for top 3 critical cases 2) Scheduling adjustments
       {!loading && (
         <div style={{ display:"grid", gridTemplateColumns:"1fr 360px", gap:16 }}>
           {/* Alert list */}
-          <div style={{ background:"#FFFFFF", border:"1px solid #EDEDED", borderRadius:12, overflow:"hidden", boxShadow:"0 1px 4px rgba(0,0,0,0.06)" }}>
-            <div style={{ padding:"13px 20px", borderBottom:"1px solid #F0F0F0", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-              <span style={{ fontWeight:700, fontSize:14, color:"#1A1A1A" }}>Fatigue Risk Alerts — {filtered.length} employees flagged</span>
+          <div style={{ background:"#FFFFFF", border:"1px solid rgba(10,49,97,0.09)", borderRadius:12, overflow:"hidden", boxShadow:"0 2px 12px rgba(10,49,97,0.06)" }}>
+            <div style={{ padding:"13px 20px", borderBottom:"1px solid rgba(10,49,97,0.07)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+              <span style={{ fontWeight:700, fontSize:14, color:"#0d1f35" }}>Fatigue Risk Alerts — {filtered.length} employees flagged</span>
               {filtered.length > 0 && <Badge label={critical.length+" CRITICAL"} color="red" />}
             </div>
             <div style={{ maxHeight:480, overflowY:"auto" }}>
               {filtered.length === 0 && (
-                <div style={{ padding:40, textAlign:"center", color:"#9CA3AF", fontSize:13 }}>
+                <div style={{ padding:40, textAlign:"center", color:"#7a8fa8", fontSize:13 }}>
                   <div style={{ fontSize:32, marginBottom:8 }}>✅</div>
                   No fatigue alerts. Open a factory roster first to scan employees, or alerts appear automatically when employees are loaded.
                 </div>
@@ -1160,7 +1188,7 @@ Provide: 1) Immediate actions for top 3 critical cases 2) Scheduling adjustments
                 const isNotif  = notified.has(alert.id) || alert.manager_notified;
                 const initials = (alert.emp_name||"??").split(" ").map(p=>p[0]).join("").slice(0,2).toUpperCase();
                 return (
-                  <div key={alert.id} style={{ padding:"13px 20px", borderBottom:"1px solid #F8F8F8", display:"flex", alignItems:"center", gap:14 }}>
+                  <div key={alert.id} style={{ padding:"13px 20px", borderBottom:"1px solid rgba(10,49,97,0.05)", display:"flex", alignItems:"center", gap:14 }}>
                     {/* Avatar */}
                     <div style={{ width:40, height:40, borderRadius:"50%", background:`hsl(${hue},70%,92%)`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:700, color:`hsl(${hue},70%,32%)`, flexShrink:0 }}>
                       {initials}
@@ -1168,10 +1196,10 @@ Provide: 1) Immediate actions for top 3 critical cases 2) Scheduling adjustments
                     {/* Info */}
                     <div style={{ flex:1, minWidth:0 }}>
                       <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:2 }}>
-                        <span style={{ fontWeight:600, fontSize:13, color:"#1A1A1A" }}>{alert.emp_name||"Unknown"}</span>
+                        <span style={{ fontWeight:600, fontSize:13, color:"#0d1f35" }}>{alert.emp_name||"Unknown"}</span>
                         <Badge label={risk} color={risk==="CRITICAL"?"red":risk==="HIGH"?"yellow":"blue"} />
                       </div>
-                      <div style={{ fontSize:11, color:"#6B7280", marginBottom:6 }}>
+                      <div style={{ fontSize:11, color:"#3a5068", marginBottom:6 }}>
                         {alert.job_title||"Employee"} · {facName(alert.factory_id)} · {alert.alert_reason||"Overtime detected"}
                       </div>
                       <div style={{ display:"flex", alignItems:"center", gap:10 }}>
@@ -1179,7 +1207,7 @@ Provide: 1) Immediate actions for top 3 critical cases 2) Scheduling adjustments
                           <div style={{ width:Math.min(100,alert.fatigue_score)+"%", height:"100%", background:col, borderRadius:99, transition:"width 0.5s" }} />
                         </div>
                         <span style={{ fontSize:11, fontWeight:700, color:col, minWidth:50 }}>{alert.fatigue_score}/100</span>
-                        <span style={{ fontSize:11, color:"#9CA3AF" }}>{alert.overtime_hrs||0}h OT/wk</span>
+                        <span style={{ fontSize:11, color:"#7a8fa8" }}>{alert.overtime_hrs||0}h OT/wk</span>
                       </div>
                     </div>
                     {/* Actions */}
@@ -1202,11 +1230,11 @@ Provide: 1) Immediate actions for top 3 critical cases 2) Scheduling adjustments
           {/* Right panel */}
           <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
             {/* AI Intervention Plan */}
-            <div style={{ background:"#F8F9FA", border:"1px solid #EDEDED", borderRadius:12, padding:18, flex:1, boxShadow:"0 1px 4px rgba(0,0,0,0.04)" }}>
+            <div style={{ background:"#f0f4f9", border:"1px solid #EDEDED", borderRadius:12, padding:18, flex:1, boxShadow:"0 1px 4px rgba(0,0,0,0.04)" }}>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
                 <div>
-                  <div style={{ fontWeight:700, fontSize:13, color:"#1A1A1A" }}>AI Intervention Plan</div>
-                  <div style={{ fontSize:10, color:"#9CA3AF", marginTop:2 }}>Based on live DB fatigue data</div>
+                  <div style={{ fontWeight:700, fontSize:13, color:"#0d1f35" }}>AI Intervention Plan</div>
+                  <div style={{ fontSize:10, color:"#7a8fa8", marginTop:2 }}>Based on live DB fatigue data</div>
                 </div>
                 <button onClick={generateInsight} disabled={aiLoading||filtered.length===0}
                   style={{ fontSize:11, fontWeight:700, padding:"6px 14px", background:aiLoading||filtered.length===0?"#F5F5F5":"#E8312A", border:aiLoading||filtered.length===0?"1px solid #E0E0E0":"none", borderRadius:6, color:aiLoading||filtered.length===0?"#9CA3AF":"#fff", cursor:filtered.length===0?"not-allowed":"pointer" }}>
@@ -1215,19 +1243,19 @@ Provide: 1) Immediate actions for top 3 critical cases 2) Scheduling adjustments
               </div>
               {aiLoading && <div style={{ display:"flex", gap:5, padding:"8px 0" }}>{[0,1,2].map(i=><div key={i} style={{ width:7,height:7,borderRadius:"50%",background:"#E8312A",animation:`bounce 1s ease-in-out ${i*0.2}s infinite` }}/>)}</div>}
               {aiInsight
-                ? <div style={{ fontSize:12, lineHeight:1.8, whiteSpace:"pre-wrap", color:"#1A1A1A" }}>{aiInsight}</div>
-                : !aiLoading && <div style={{ fontSize:12, color:"#9CA3AF", lineHeight:1.6 }}>Click Generate for AI-powered fatigue intervention recommendations based on live employee data.</div>
+                ? <div style={{ fontSize:12, lineHeight:1.8, whiteSpace:"pre-wrap", color:"#0d1f35" }}>{aiInsight}</div>
+                : !aiLoading && <div style={{ fontSize:12, color:"#7a8fa8", lineHeight:1.6 }}>Click Generate for AI-powered fatigue intervention recommendations based on live employee data.</div>
               }
             </div>
 
             {/* Risk thresholds */}
-            <div style={{ background:"#FFFFFF", border:"1px solid #EDEDED", borderRadius:12, padding:18, boxShadow:"0 1px 4px rgba(0,0,0,0.04)" }}>
-              <div style={{ fontSize:11, fontWeight:700, color:"#9CA3AF", letterSpacing:"0.08em", textTransform:"uppercase", marginBottom:12 }}>Risk Thresholds</div>
+            <div style={{ background:"#ffffff", border:"1px solid rgba(10,49,97,0.09)", borderRadius:10, padding:18, boxShadow:"0 1px 4px rgba(0,0,0,0.04)" }}>
+              <div style={{ fontSize:11, fontWeight:700, color:"#7a8fa8", letterSpacing:"0.08em", textTransform:"uppercase", marginBottom:12 }}>Risk Thresholds</div>
               {[["CRITICAL",">70pts","Immediate intervention","#CF1322"],["HIGH","51–70pts","Manager notification","#D46B08"],["MEDIUM","31–50pts","Monitor closely","#005695"],["LOW","≤30pts","Within safe limits","#389E0D"]].map(([l,pts,action,col])=>(
                 <div key={l} style={{ display:"flex", alignItems:"center", gap:10, marginBottom:9 }}>
                   <div style={{ width:8, height:8, borderRadius:"50%", background:col, flexShrink:0 }} />
                   <span style={{ fontSize:12, fontWeight:700, color:col, width:70 }}>{l}</span>
-                  <span style={{ fontSize:11, color:"#6B7280" }}>{pts} · {action}</span>
+                  <span style={{ fontSize:11, color:"#3a5068" }}>{pts} · {action}</span>
                 </div>
               ))}
             </div>
@@ -1300,8 +1328,8 @@ function SkillsIntelligenceTab() {
 
   return (
     <div>
-      <h2 style={{ fontSize:20, fontWeight:700, margin:"0 0 4px", color:"#1A1A1A" }}>🎓 Skills Intelligence</h2>
-      <p style={{ color:"#6B7280", fontSize:13, margin:"0 0 22px", color:"#6B7280" }}>
+      <h2 style={{ fontSize:20, fontWeight:700, margin:"0 0 4px", color:"#0d1f35" }}>🎓 Skills Intelligence</h2>
+      <p style={{ color:"#7a8fa8", fontSize:13, margin:"0 0 22px", color:"#3a5068" }}>
         SF Positions & Job Codes: {positions?.length||0} positions · {jobcodes?.length||0} job codes · AI-powered gap analysis
       </p>
       {loading && <div style={{ color:"#005695", padding:20 }}>Loading SF position & job code data…</div>}
@@ -1309,7 +1337,7 @@ function SkillsIntelligenceTab() {
         <>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:20 }}>
             {/* Skill gap bars */}
-            <div style={{ background:"#FFFFFF", border:"1px solid #EDEDED", borderRadius:12, boxShadow:"0 1px 4px rgba(0,0,0,0.06)", padding:20 }}>
+            <div style={{ background:"#FFFFFF", border:"1px solid rgba(10,49,97,0.09)", borderRadius:12, boxShadow:"0 2px 12px rgba(10,49,97,0.06)", padding:20 }}>
               <div style={{ fontWeight:700, fontSize:14, marginBottom:16 }}>Skills Gap by Domain</div>
               {SKILL_DOMAINS.map(d=>(
                 <div key={d.domain} style={{ marginBottom:16 }}>
@@ -1330,11 +1358,11 @@ function SkillsIntelligenceTab() {
             </div>
 
             {/* SF Positions table */}
-            <div style={{ background:"#FFFFFF", border:"1px solid #EDEDED", borderRadius:12, boxShadow:"0 1px 4px rgba(0,0,0,0.06)", overflow:"hidden" }}>
+            <div style={{ background:"#FFFFFF", border:"1px solid rgba(10,49,97,0.09)", borderRadius:12, boxShadow:"0 2px 12px rgba(10,49,97,0.06)", overflow:"hidden" }}>
               <div style={{ padding:"13px 16px", borderBottom:`1px solid ${C.border}`, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                 <span style={{ fontWeight:700, fontSize:13 }}>SF Active Positions</span>
                 <select value={selectedDept} onChange={e=>setSelectedDept(e.target.value)}
-                  style={{ fontSize:11, background:"#F8F9FA", border:`1px solid ${C.border}`, borderRadius:6, padding:"4px 8px", color:C.text }}>
+                  style={{ fontSize:11, background:"#f0f4f9", border:`1px solid ${C.border}`, borderRadius:6, padding:"4px 8px", color:C.text }}>
                   {departments.slice(0,10).map(d=><option key={d} value={d}>{d}</option>)}
                 </select>
               </div>
@@ -1354,7 +1382,7 @@ function SkillsIntelligenceTab() {
           </div>
 
           {/* AI Gap Analysis */}
-          <div style={{ background:"#F8F9FA", border:`1px solid ${C.border}`, borderRadius:12, padding:20 }}>
+          <div style={{ background:"#f0f4f9", border:`1px solid ${C.border}`, borderRadius:12, padding:20 }}>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
               <span style={{ fontWeight:700, fontSize:14 }}>🤖 AI 90-Day Reskilling Roadmap</span>
               <button onClick={generateGapAnalysis} disabled={aiLoading}
@@ -1364,9 +1392,9 @@ function SkillsIntelligenceTab() {
             </div>
             {aiGap
               ? <div style={{ fontSize:13, lineHeight:1.8, whiteSpace:"pre-wrap" }}>{aiGap}</div>
-              : !aiLoading && <div style={{ color:"#6B7280", fontSize:13 }}>Click Generate for AI-powered reskilling roadmap based on SF position data and skill gaps</div>
+              : !aiLoading && <div style={{ color:"#7a8fa8", fontSize:13 }}>Click Generate for AI-powered reskilling roadmap based on SF position data and skill gaps</div>
             }
-            {aiLoading && <div style={{ color:"#6B7280", fontSize:13 }}>Analysing SF positions and designing reskilling programmes…</div>}
+            {aiLoading && <div style={{ color:"#7a8fa8", fontSize:13 }}>Analysing SF positions and designing reskilling programmes…</div>}
           </div>
         </>
       )}
@@ -1422,12 +1450,12 @@ function OperationsTab() {
 
   return (
     <div>
-      <h2 style={{ fontSize:20, fontWeight:700, margin:"0 0 4px", color:"#1A1A1A" }}>🏭 Operations Intelligence</h2>
-      <p style={{ color:"#6B7280", fontSize:13, margin:"0 0 22px", color:"#6B7280" }}>Factory throughput vs workforce utilization · AI-powered shift optimization · SF department data</p>
+      <h2 style={{ fontSize:20, fontWeight:700, margin:"0 0 4px", color:"#0d1f35" }}>🏭 Operations Intelligence</h2>
+      <p style={{ color:"#7a8fa8", fontSize:13, margin:"0 0 22px", color:"#3a5068" }}>Factory throughput vs workforce utilization · AI-powered shift optimization · SF department data</p>
 
       {/* Throughput vs Utilization */}
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:20 }}>
-        <div style={{ background:"#FFFFFF", border:"1px solid #EDEDED", borderRadius:12, boxShadow:"0 1px 4px rgba(0,0,0,0.06)", padding:20 }}>
+        <div style={{ background:"#FFFFFF", border:"1px solid rgba(10,49,97,0.09)", borderRadius:12, boxShadow:"0 2px 12px rgba(10,49,97,0.06)", padding:20 }}>
           <div style={{ fontWeight:700, fontSize:14, marginBottom:16 }}>Throughput vs Workforce Utilization</div>
           {correlationData.map(f => {
             const col = f.risk==="high"?C.accent:f.risk==="medium"?C.gold:C.green;
@@ -1456,28 +1484,28 @@ function OperationsTab() {
         </div>
 
         {/* SF Departments */}
-        <div style={{ background:"#FFFFFF", border:"1px solid #EDEDED", borderRadius:12, boxShadow:"0 1px 4px rgba(0,0,0,0.06)", padding:20 }}>
+        <div style={{ background:"#FFFFFF", border:"1px solid rgba(10,49,97,0.09)", borderRadius:12, boxShadow:"0 2px 12px rgba(10,49,97,0.06)", padding:20 }}>
           <div style={{ fontWeight:700, fontSize:14, marginBottom:16 }}>SF Department Structure</div>
-          {departments.length === 0 && <div style={{ color:"#6B7280", fontSize:13 }}>Loading SF department data…</div>}
+          {departments.length === 0 && <div style={{ color:"#7a8fa8", fontSize:13 }}>Loading SF department data…</div>}
           {departments.map((d,i)=>(
-            <div key={i} style={{ padding:"10px 14px", marginBottom:8, background:"#F8F9FA", border:`1px solid ${C.border}`, borderRadius:8 }}>
+            <div key={i} style={{ padding:"10px 14px", marginBottom:8, background:"#f0f4f9", border:`1px solid ${C.border}`, borderRadius:8 }}>
               <div style={{ fontWeight:600, fontSize:12 }}>{d.name_en_US||d.name_localized||d.externalCode}</div>
               <div style={{ fontSize:10, color:C.muted, marginTop:2 }}>Code: {d.externalCode}{d.parent?" · Parent: "+d.parent:""}</div>
             </div>
           ))}
           {departments.length === 0 && (
-            <div style={{ color:"#6B7280", fontSize:12, fontStyle:"italic" }}>SF Departments will appear here when loaded from SuccessFactors</div>
+            <div style={{ color:"#7a8fa8", fontSize:12, fontStyle:"italic" }}>SF Departments will appear here when loaded from SuccessFactors</div>
           )}
         </div>
       </div>
 
       {/* Shift Optimizer */}
-      <div style={{ background:"#F8F9FA", border:`1px solid ${C.border}`, borderRadius:12, padding:20 }}>
+      <div style={{ background:"#f0f4f9", border:`1px solid ${C.border}`, borderRadius:12, padding:20 }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
           <span style={{ fontWeight:700, fontSize:14 }}>⚙ AI Shift Optimization Engine</span>
           <div style={{ display:"flex", gap:10, alignItems:"center" }}>
             <select value={selectedFactory.id} onChange={e=>setSelectedFactory(FACTORIES.find(f=>f.id===e.target.value))}
-              style={{ fontSize:12, background:"#F8F9FA", border:`1px solid ${C.border}`, borderRadius:7, padding:"6px 12px", color:C.text }}>
+              style={{ fontSize:12, background:"#f0f4f9", border:`1px solid ${C.border}`, borderRadius:7, padding:"6px 12px", color:C.text }}>
               {FACTORIES.map(f=><option key={f.id} value={f.id}>{f.name}</option>)}
             </select>
             <button onClick={generateShiftPlan} disabled={planLoading}
@@ -1487,22 +1515,22 @@ function OperationsTab() {
           </div>
         </div>
 
-        {planLoading && <div style={{ color:"#6B7280", fontSize:13 }}>Running AI shift optimization for {selectedFactory.name}…</div>}
+        {planLoading && <div style={{ color:"#7a8fa8", fontSize:13 }}>Running AI shift optimization for {selectedFactory.name}…</div>}
 
         {shiftPlan && (
           <div style={{ animation:"fadeIn 0.3s ease" }}>
             <div style={{ display:"flex", gap:14, marginBottom:16 }}>
-              <div style={{ flex:1, background:"#F8F9FA", border:`1px solid ${C.border}`, borderRadius:10, padding:"13px 16px", textAlign:"center" }}>
-                <div style={{ color:"#9CA3AF", fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em" }}>Current Efficiency</div>
+              <div style={{ flex:1, background:"#f0f4f9", border:`1px solid ${C.border}`, borderRadius:10, padding:"13px 16px", textAlign:"center" }}>
+                <div style={{ color:"#7a8fa8", fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em" }}>Current Efficiency</div>
                 <div style={{ fontSize:28, fontWeight:800, color:C.gold, marginTop:4 }}>{shiftPlan.currentEfficiency}%</div>
               </div>
               <div style={{ display:"flex", alignItems:"center", fontSize:20, color:C.green }}>→</div>
               <div style={{ flex:1, background:"#0A2E1A", border:`1px solid ${C.green}44`, borderRadius:10, padding:"13px 16px", textAlign:"center" }}>
-                <div style={{ color:"#9CA3AF", fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em" }}>Optimized Efficiency</div>
+                <div style={{ color:"#7a8fa8", fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em" }}>Optimized Efficiency</div>
                 <div style={{ fontSize:28, fontWeight:800, color:C.green, marginTop:4 }}>{shiftPlan.optimizedEfficiency}%</div>
               </div>
-              <div style={{ flex:2, background:"#F8F9FA", border:`1px solid ${C.border}`, borderRadius:10, padding:"13px 16px" }}>
-                <div style={{ color:"#9CA3AF", fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:4 }}>Projected Savings</div>
+              <div style={{ flex:2, background:"#f0f4f9", border:`1px solid ${C.border}`, borderRadius:10, padding:"13px 16px" }}>
+                <div style={{ color:"#7a8fa8", fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:4 }}>Projected Savings</div>
                 <div style={{ fontSize:13, fontWeight:600, color:C.green }}>{shiftPlan.savings}</div>
               </div>
             </div>
@@ -1512,7 +1540,7 @@ function OperationsTab() {
             {shiftPlan.shifts?.length > 0 && (
               <div style={{ display:"grid", gridTemplateColumns:`repeat(${Math.min(shiftPlan.shifts.length,3)},1fr)`, gap:10, marginBottom:14 }}>
                 {shiftPlan.shifts.map((s,i)=>(
-                  <div key={i} style={{ background:"#F8F9FA", border:`1px solid ${C.border}`, borderRadius:9, padding:"12px 14px" }}>
+                  <div key={i} style={{ background:"#f0f4f9", border:`1px solid ${C.border}`, borderRadius:9, padding:"12px 14px" }}>
                     <div style={{ fontWeight:700, fontSize:12, marginBottom:6, color:[C.gold,C.blue,C.purple][i%3] }}>{s.name}</div>
                     <div style={{ fontSize:11, color:C.muted }}>👥 {s.workers} workers</div>
                     <div style={{ fontSize:11, color:C.muted }}>⏰ {s.hours}</div>
@@ -1527,7 +1555,7 @@ function OperationsTab() {
               <div>
                 <div style={{ fontWeight:700, fontSize:12, marginBottom:8, color:C.muted, textTransform:"uppercase", letterSpacing:"0.08em" }}>Immediate Actions</div>
                 {shiftPlan.actions.map((a,i)=>(
-                  <div key={i} style={{ padding:"8px 14px", marginBottom:6, background:"#F8F9FA", border:`1px solid ${C.border}`, borderRadius:7, fontSize:12 }}>
+                  <div key={i} style={{ padding:"8px 14px", marginBottom:6, background:"#f0f4f9", border:`1px solid ${C.border}`, borderRadius:7, fontSize:12 }}>
                     {i+1}. {a}
                   </div>
                 ))}
@@ -1537,7 +1565,7 @@ function OperationsTab() {
         )}
 
         {!shiftPlan && !planLoading && (
-          <div style={{ color:"#6B7280", fontSize:13, textAlign:"center", padding:20 }}>
+          <div style={{ color:"#7a8fa8", fontSize:13, textAlign:"center", padding:20 }}>
             Select a factory and click Optimize Shifts to get AI-powered shift rotation recommendations
           </div>
         )}
@@ -1564,7 +1592,7 @@ const AUTH = {
     await fetch(API_BASE+"/auth/logout", {
       method:"POST", headers:{"Authorization":"Bearer "+token},
     }).catch(()=>{});
-    sessionStorage.removeItem("nestle_eos_token");
+    localStorage.removeItem("eos_token");
   },
   async changePassword(token, currentPassword, newPassword) {
     const r = await fetch(API_BASE+"/auth/change-password", {
@@ -1619,32 +1647,33 @@ function LoginScreen({ onLogin }) {
     try {
       const data = await AUTH.login(username.trim(), password);
       if (data.ok && data.token) {
-        sessionStorage.setItem("nestle_eos_token", data.token);
+        localStorage.setItem("eos_token", data.token);
+        window.__EOS_TOKEN__ = data.token;
         onLogin({ ...data.user, token: data.token });
       } else {
         setError(data.error || "Invalid username or password.");
         setLoading(false);
       }
     } catch(e) {
-      setError("Cannot connect to server. Make sure node server.js is running on port 3001.");
+      setError("Connection failed: " + (e.message||"Unknown error") + ". If deployed, check Railway logs.");
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ minHeight:"100vh", background:"#F5F5F5", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Helvetica Neue','Helvetica','Arial',sans-serif", color:C.text }}>
+    <div style={{ minHeight:"100vh", background:"#f0f4f9", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Sora',sans-serif", color:C.text }}>
       <div style={{ width:420, animation:"fadeIn 0.4s ease" }}>
         {/* Logo */}
         <div style={{ textAlign:"center", marginBottom:36 }}>
-          <div style={{ display:"inline-flex", alignItems:"center", justifyContent:"center", width:64, height:64, background:C.accent, borderRadius:12, fontSize:28, fontWeight:900, color:"#fff", marginBottom:16, boxShadow:"0 4px 20px rgba(232,49,42,0.25)" }}>N</div>
-          <div style={{ fontSize:20, fontWeight:800, letterSpacing:"-0.5px" }}>Nestlé EOS</div>
+          <div style={{ display:"inline-flex", alignItems:"center", justifyContent:"center", width:64, height:64, background:"linear-gradient(135deg,#00b5a8 0%,#007d74 100%)", borderRadius:14, fontSize:28, fontWeight:700, color:"#fff", marginBottom:16, boxShadow:"0 4px 20px rgba(0,181,168,0.3)", fontFamily:"'Sora',sans-serif" }}>N</div>
+          <div style={{ fontSize:20, fontWeight:700, letterSpacing:"-0.5px", color:"#0d1f35" }}>Nestlé <span style={{ color:"#00b5a8" }}>HR·EOS</span></div>
           <div style={{ fontSize:13, color:C.muted, marginTop:4 }}>Enterprise AI Operating System</div>
         </div>
 
         {/* Card */}
-        <div style={{ background:"#FFFFFF", border:"1px solid #E8E8E8", borderRadius:12, padding:36, boxShadow:"0 4px 24px rgba(0,0,0,0.08)" }}>
-          <div style={{ fontSize:18, fontWeight:700, marginBottom:6, letterSpacing:"-0.3px", color:"#1A1A1A" }}>Sign in to your account</div>
-          <div style={{ fontSize:13, color:"#6B7280", marginBottom:24, fontWeight:400, lineHeight:1.6 }}>Access the Nestlé workforce intelligence platform</div>
+        <div style={{ background:"#FFFFFF", border:"1px solid rgba(10,49,97,0.1)", borderRadius:12, padding:36, boxShadow:"0 4px 24px rgba(10,49,97,0.12)" }}>
+          <div style={{ fontSize:18, fontWeight:700, marginBottom:6, letterSpacing:"-0.3px", color:"#0d1f35" }}>Sign in to your account</div>
+          <div style={{ fontSize:13, color:"#3a5068", marginBottom:24, fontWeight:400, lineHeight:1.6 }}>Access the Nestlé workforce intelligence platform</div>
 
           {/* Username */}
           <div style={{ marginBottom:16 }}>
@@ -1653,7 +1682,7 @@ function LoginScreen({ onLogin }) {
               value={username} onChange={e=>setUsername(e.target.value)}
               onKeyDown={e=>e.key==="Enter"&&handleLogin()}
               placeholder="Enter your username"
-              style={{ width:"100%", padding:"11px 14px", fontSize:13, background:"#F8F9FA", border:`1px solid ${error?C.accent:C.border}`, borderRadius:8, color:C.text, outline:"none", boxSizing:"border-box" }}
+              style={{ width:"100%", padding:"11px 14px", fontSize:13, background:"#f0f4f9", border:`1px solid ${error?C.accent:C.border}`, borderRadius:8, color:C.text, outline:"none", boxSizing:"border-box" }}
             />
           </div>
 
@@ -1666,7 +1695,7 @@ function LoginScreen({ onLogin }) {
                 value={password} onChange={e=>setPassword(e.target.value)}
                 onKeyDown={e=>e.key==="Enter"&&handleLogin()}
                 placeholder="Enter your password"
-                style={{ width:"100%", padding:"11px 44px 11px 14px", fontSize:14, background:"#F8F9FA", border:`1px solid ${error?C.accent:C.border}`, borderRadius:8, color:C.text, outline:"none", boxSizing:"border-box" }}
+                style={{ width:"100%", padding:"11px 44px 11px 14px", fontSize:14, background:"#f0f4f9", border:`1px solid ${error?C.accent:C.border}`, borderRadius:8, color:C.text, outline:"none", boxSizing:"border-box" }}
               />
               <button onClick={()=>setShowPass(s=>!s)} style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", color:C.muted, cursor:"pointer", fontSize:13 }}>
                 {showPass?"🙈":"👁"}
@@ -1683,40 +1712,40 @@ function LoginScreen({ onLogin }) {
 
           {/* Submit */}
           <button onClick={handleLogin} disabled={loading||!username||!password}
-            style={{ width:"100%", padding:"12px", fontSize:13, fontWeight:700, letterSpacing:"0.03em", background:loading||!username||!password?C.surfaceAlt:C.accent, border:"none", borderRadius:8, color:"#fff", cursor:loading||!username||!password?"not-allowed":"pointer", transition:"background 0.2s", boxSizing:"border-box" }}>
+            style={{ width:"100%", padding:"12px", fontSize:13, fontWeight:600, background:loading||!username||!password?"#e8edf5":"#0a3161", border:"none", borderRadius:8, color:loading||!username||!password?"#7a8fa8":"#fff", cursor:loading||!username||!password?"not-allowed":"pointer", transition:"background 0.2s", boxSizing:"border-box" }}>
             {loading ? "Signing in…" : "Sign In"}
           </button>
 
-          <div style={{ marginTop:20, padding:14, background:"#F8F9FA", border:"1px solid #E8E8E8", borderRadius:8 }}>
-            <div style={{ fontSize:10, fontWeight:600, color:"#9CA3AF", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:8 }}>Available accounts — click username to fill</div>
-            <div style={{ fontSize:11, color:"#9CA3AF", marginBottom:8 }}>Default password: <code style={{ background:"#F0F0F0", padding:"1px 6px", borderRadius:3 }}>Nestle@2024</code></div>
+          <div style={{ marginTop:20, padding:14, background:"#f0f4f9", border:"1px solid #E8E8E8", borderRadius:8 }}>
+            <div style={{ fontSize:10, fontWeight:600, color:"#7a8fa8", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:8 }}>Available accounts — click username to fill</div>
+            <div style={{ fontSize:11, color:"#7a8fa8", marginBottom:8 }}>Default password: <code style={{ background:"#F0F0F0", padding:"1px 6px", borderRadius:3 }}>Nestle@2024</code></div>
             <div style={{ display:"flex", flexDirection:"column", gap:3 }}>
               {DEMO_HINTS.map(u=>(
                 <div key={u.username} onClick={()=>{ setUsername(u.username); setError(""); }}
                   style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"7px 10px", borderRadius:6, cursor:"pointer", background:"transparent", transition:"background 0.1s" }}
-                  onMouseOver={e=>e.currentTarget.style.background="#F0F0F0"}
+                  onMouseOver={e=>e.currentTarget.style.background="#f0f4f9"}
                   onMouseOut={e=>e.currentTarget.style.background="transparent"}>
                   <div>
-                    <span style={{ fontSize:12, fontWeight:600, color:"#374151" }}>{u.username}</span>
-                    <span style={{ fontSize:11, color:"#9CA3AF", marginLeft:8 }}>{u.role}</span>
+                    <span style={{ fontSize:12, fontWeight:600, color:"#3a5068" }}>{u.username}</span>
+                    <span style={{ fontSize:11, color:"#7a8fa8", marginLeft:8 }}>{u.role}</span>
                   </div>
-                  <span style={{ fontSize:10, color:"#9CA3AF", fontFamily:"monospace" }}>{u.password||u.hint}</span>
+                  <span style={{ fontSize:10, color:"#7a8fa8", fontFamily:"monospace" }}>{u.password||u.hint}</span>
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        <div style={{ textAlign:"center", marginTop:20, fontSize:11, color:"#9CA3AF" }}>
+        <div style={{ textAlign:"center", marginTop:20, fontSize:11, color:"#7a8fa8" }}>
           © 2026 Nestlé S.A. · Enterprise AI Operating System
         </div>
       </div>
 
       <style>{`
         @keyframes fadeIn { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
-        * { box-sizing:border-box; }
-        body { -webkit-font-smoothing:antialiased; background:#F5F5F5; }
-        input::placeholder { color:#AAAAAA; font-size:13px; }
+        *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+        body { -webkit-font-smoothing:antialiased; background:#f0f4f9; font-family:'Sora',sans-serif; }
+        input::placeholder { color:#7a8fa8; font-size:13px; }
       `}</style>
     </div>
   );
@@ -1748,13 +1777,13 @@ function ChangePwdModal({ token, onClose }) {
       <div style={{ background:"#fff", borderRadius:12, width:400, padding:28, boxShadow:"0 8px 40px rgba(0,0,0,0.15)", animation:"fadeIn 0.2s ease" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
           <div style={{ fontWeight:700, fontSize:16 }}>🔑 Change Password</div>
-          <button onClick={onClose} style={{ background:"none", border:"none", fontSize:18, cursor:"pointer", color:"#9CA3AF" }}>✕</button>
+          <button onClick={onClose} style={{ background:"none", border:"none", fontSize:18, cursor:"pointer", color:"#7a8fa8" }}>✕</button>
         </div>
         {[["Current Password", current, setCurrent], ["New Password", next, setNext], ["Confirm New Password", confirm, setConfirm]].map(([label, val, set]) => (
           <div key={label} style={{ marginBottom:14 }}>
-            <label style={{ fontSize:11, fontWeight:600, color:"#6B7280", textTransform:"uppercase", letterSpacing:"0.08em", display:"block", marginBottom:5 }}>{label}</label>
+            <label style={{ fontSize:11, fontWeight:600, color:"#3a5068", textTransform:"uppercase", letterSpacing:"0.08em", display:"block", marginBottom:5 }}>{label}</label>
             <input type="password" value={val} onChange={e=>set(e.target.value)}
-              style={{ width:"100%", padding:"9px 12px", fontSize:13, background:"#F8F9FA", border:"1px solid #E0E0E0", borderRadius:7, color:"#1A1A1A", outline:"none", boxSizing:"border-box" }} />
+              style={{ width:"100%", padding:"9px 12px", fontSize:13, background:"#f0f4f9", border:"1px solid #E0E0E0", borderRadius:7, color:"#0d1f35", outline:"none", boxSizing:"border-box" }} />
           </div>
         ))}
         {msg && (
@@ -1767,7 +1796,7 @@ function ChangePwdModal({ token, onClose }) {
             style={{ flex:1, padding:"10px", fontSize:13, fontWeight:700, background:loading?"#E0E0E0":"#E8312A", border:"none", borderRadius:8, color:"#fff", cursor:"pointer" }}>
             {loading?"Saving…":"Change Password"}
           </button>
-          <button onClick={onClose} style={{ padding:"10px 16px", fontSize:13, background:"#F5F5F5", border:"1px solid #E0E0E0", borderRadius:8, color:"#374151", cursor:"pointer" }}>Cancel</button>
+          <button onClick={onClose} style={{ padding:"10px 16px", fontSize:13, background:"#F5F5F5", border:"1px solid #E0E0E0", borderRadius:8, color:"#3a5068", cursor:"pointer" }}>Cancel</button>
         </div>
       </div>
     </div>
@@ -1818,14 +1847,14 @@ function UserMgmtModal({ token, onClose, currentUser }) {
   const ACCESS_OPTIONS = ["full","zone","safety","ops","admin"];
   const F = (label, field, type="text", opts=null) => (
     <div key={field} style={{ marginBottom:12 }}>
-      <label style={{ fontSize:11, fontWeight:600, color:"#6B7280", textTransform:"uppercase", letterSpacing:"0.07em", display:"block", marginBottom:4 }}>{label}</label>
+      <label style={{ fontSize:11, fontWeight:600, color:"#3a5068", textTransform:"uppercase", letterSpacing:"0.07em", display:"block", marginBottom:4 }}>{label}</label>
       {opts
         ? <select value={form[field]} onChange={e=>setForm(f=>({...f,[field]:e.target.value}))}
-            style={{ width:"100%", padding:"8px 10px", fontSize:13, background:"#F8F9FA", border:"1px solid #E0E0E0", borderRadius:7, color:"#1A1A1A" }}>
+            style={{ width:"100%", padding:"8px 10px", fontSize:13, background:"#f0f4f9", border:"1px solid #E0E0E0", borderRadius:7, color:"#0d1f35" }}>
             {opts.map(o=><option key={o} value={o}>{o}</option>)}
           </select>
         : <input type={type} value={form[field]} onChange={e=>setForm(f=>({...f,[field]:e.target.value}))}
-            style={{ width:"100%", padding:"8px 10px", fontSize:13, background:"#F8F9FA", border:"1px solid #E0E0E0", borderRadius:7, color:"#1A1A1A", outline:"none", boxSizing:"border-box" }} />
+            style={{ width:"100%", padding:"8px 10px", fontSize:13, background:"#f0f4f9", border:"1px solid #E0E0E0", borderRadius:7, color:"#0d1f35", outline:"none", boxSizing:"border-box" }} />
       }
     </div>
   );
@@ -1834,12 +1863,12 @@ function UserMgmtModal({ token, onClose, currentUser }) {
     <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.4)", zIndex:2000, display:"flex", alignItems:"center", justifyContent:"center" }}>
       <div style={{ background:"#fff", borderRadius:12, width:600, maxHeight:"80vh", display:"flex", flexDirection:"column", boxShadow:"0 8px 40px rgba(0,0,0,0.15)", animation:"fadeIn 0.2s ease" }}>
         {/* Header */}
-        <div style={{ padding:"18px 24px", borderBottom:"1px solid #F0F0F0", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+        <div style={{ padding:"18px 24px", borderBottom:"1px solid rgba(10,49,97,0.07)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
           <div style={{ fontWeight:700, fontSize:16 }}>👥 User Management</div>
           <div style={{ display:"flex", gap:8 }}>
-            {view==="list" && <button onClick={()=>{setView("add");setMsg(null);}} style={{ padding:"6px 14px", fontSize:12, fontWeight:600, background:"#E8312A", border:"none", borderRadius:7, color:"#fff", cursor:"pointer" }}>+ Add User</button>}
+            {view==="list" && <button onClick={()=>{setView("add");setMsg(null);}} style={{ padding:"6px 14px", fontSize:12, fontWeight:600, background:"#0a3161", border:"none", borderRadius:7, color:"#fff", cursor:"pointer" }}>+ Add User</button>}
             {view==="add" && <button onClick={()=>setView("list")} style={{ padding:"6px 14px", fontSize:12, background:"#F5F5F5", border:"1px solid #E0E0E0", borderRadius:7, cursor:"pointer" }}>← Back</button>}
-            <button onClick={onClose} style={{ background:"none", border:"none", fontSize:18, cursor:"pointer", color:"#9CA3AF" }}>✕</button>
+            <button onClick={onClose} style={{ background:"none", border:"none", fontSize:18, cursor:"pointer", color:"#7a8fa8" }}>✕</button>
           </div>
         </div>
 
@@ -1852,13 +1881,13 @@ function UserMgmtModal({ token, onClose, currentUser }) {
         <div style={{ flex:1, overflow:"auto", padding:"16px 24px" }}>
           {view==="list" && (
             <>
-              {loading && <div style={{ color:"#9CA3AF", padding:20, textAlign:"center" }}>Loading users…</div>}
+              {loading && <div style={{ color:"#7a8fa8", padding:20, textAlign:"center" }}>Loading users…</div>}
               {!loading && users.map(u=>(
-                <div key={u.id} style={{ display:"flex", alignItems:"center", gap:12, padding:"10px 0", borderBottom:"1px solid #F5F5F5" }}>
+                <div key={u.id} style={{ display:"flex", alignItems:"center", gap:12, padding:"10px 0", borderBottom:"1px solid rgba(10,49,97,0.06)" }}>
                   <div style={{ width:36, height:36, borderRadius:"50%", background:"#FFF1F0", border:"1px solid #FFCCC7", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:700, color:"#E8312A", flexShrink:0 }}>{u.avatar}</div>
                   <div style={{ flex:1 }}>
                     <div style={{ fontWeight:600, fontSize:13 }}>{u.name}</div>
-                    <div style={{ fontSize:11, color:"#9CA3AF" }}>{u.username} · {u.role} · {u.zone}</div>
+                    <div style={{ fontSize:11, color:"#7a8fa8" }}>{u.username} · {u.role} · {u.zone}</div>
                   </div>
                   <div style={{ display:"flex", alignItems:"center", gap:6 }}>
                     {/* Reset password inline */}
@@ -1866,10 +1895,10 @@ function UserMgmtModal({ token, onClose, currentUser }) {
                       ? <div style={{ display:"flex", gap:4 }}>
                           <input value={resetPwd.value} onChange={e=>setResetPwd(r=>({...r,value:e.target.value}))} placeholder="New password" type="password"
                             style={{ padding:"4px 8px", fontSize:11, border:"1px solid #E0E0E0", borderRadius:5, width:120, outline:"none" }} />
-                          <button onClick={doResetPwd} style={{ padding:"4px 8px", fontSize:11, fontWeight:600, background:"#005695", border:"none", borderRadius:5, color:"#fff", cursor:"pointer" }}>Save</button>
+                          <button onClick={doResetPwd} style={{ padding:"4px 8px", fontSize:11, fontWeight:600, background:"#0a3161", border:"none", borderRadius:5, color:"#fff", cursor:"pointer" }}>Save</button>
                           <button onClick={()=>setResetPwd({id:null,value:""})} style={{ padding:"4px 8px", fontSize:11, background:"#F5F5F5", border:"1px solid #E0E0E0", borderRadius:5, cursor:"pointer" }}>✕</button>
                         </div>
-                      : <button onClick={()=>setResetPwd({id:u.id,value:""})} style={{ padding:"4px 10px", fontSize:11, background:"#F5F5F5", border:"1px solid #E0E0E0", borderRadius:5, cursor:"pointer", color:"#374151" }}>Reset Pwd</button>
+                      : <button onClick={()=>setResetPwd({id:u.id,value:""})} style={{ padding:"4px 10px", fontSize:11, background:"#F5F5F5", border:"1px solid #E0E0E0", borderRadius:5, cursor:"pointer", color:"#3a5068" }}>Reset Pwd</button>
                     }
                     {u.id !== currentUser.id && (
                       <button onClick={()=>deleteUser(u.id, u.name)} style={{ padding:"4px 10px", fontSize:11, background:"#FFF1F0", border:"1px solid #FFCCC7", borderRadius:5, cursor:"pointer", color:"#CF1322" }}>Delete</button>
@@ -1891,7 +1920,7 @@ function UserMgmtModal({ token, onClose, currentUser }) {
                 {F("Zone", "zone")}
                 {F("Access Level", "access", "text", ACCESS_OPTIONS)}
               </div>
-              <button onClick={addUser} style={{ width:"100%", padding:"10px", fontSize:13, fontWeight:700, background:"#E8312A", border:"none", borderRadius:8, color:"#fff", cursor:"pointer", marginTop:8 }}>
+              <button onClick={addUser} style={{ width:"100%", padding:"10px", fontSize:13, fontWeight:700, background:"#0a3161", border:"none", borderRadius:8, color:"#fff", cursor:"pointer", marginTop:8 }}>
                 Create User
               </button>
             </div>
@@ -1957,9 +1986,9 @@ function JouleWidget({ currentUser }) {
           onClick={()=>{ setOpen(o=>!o); setPulse(false); }}
           style={{
             width:52, height:52, borderRadius:"50%",
-            background: open ? "#1A1A1A" : "linear-gradient(135deg, #E8312A 0%, #C0392B 100%)",
+            background: open ? "#0a3161" : "linear-gradient(135deg, #0a3161 0%, #1e6dc5 100%)",
             border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
-            boxShadow: open ? "0 4px 16px rgba(0,0,0,0.25)" : "0 4px 16px rgba(232,49,42,0.4)",
+            boxShadow: open ? "0 4px 16px rgba(10,49,97,0.35)" : "0 4px 16px rgba(30,109,197,0.4)",
             transition:"all 0.2s ease", transform: open ? "rotate(0deg)" : "scale(1)",
           }}
           title="Nestlé HR Copilot"
@@ -1985,7 +2014,7 @@ function JouleWidget({ currentUser }) {
           border:"1px solid #E8E8E8",
         }}>
           {/* Header */}
-          <div style={{ background:"linear-gradient(135deg, #E8312A 0%, #C0392B 100%)", padding:"14px 16px", display:"flex", alignItems:"center", gap:10 }}>
+          <div style={{ background:"linear-gradient(135deg, #0a3161 0%, #1e6dc5 100%)", padding:"14px 16px", display:"flex", alignItems:"center", gap:10 }}>
             <div style={{ width:32, height:32, borderRadius:"50%", background:"rgba(255,255,255,0.2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:16 }}>🤖</div>
             <div style={{ flex:1 }}>
               <div style={{ color:"#fff", fontWeight:700, fontSize:13, letterSpacing:"0.01em" }}>Nestlé HR Copilot</div>
@@ -1999,12 +2028,12 @@ function JouleWidget({ currentUser }) {
             {messages.length === 0 && (
               <div style={{ textAlign:"center", padding:"20px 0" }}>
                 <div style={{ fontSize:28, marginBottom:8 }}>👋</div>
-                <div style={{ fontSize:13, fontWeight:600, color:"#1A1A1A", marginBottom:4 }}>Hi, {currentUser?.name?.split(" ")[0] || "there"}!</div>
-                <div style={{ fontSize:12, color:"#6B7280", lineHeight:1.6 }}>Ask me anything about workforce, safety, scheduling, or talent across Nestlé's 350+ factories.</div>
+                <div style={{ fontSize:13, fontWeight:600, color:"#0d1f35", marginBottom:4 }}>Hi, {currentUser?.name?.split(" ")[0] || "there"}!</div>
+                <div style={{ fontSize:12, color:"#3a5068", lineHeight:1.6 }}>Ask me anything about workforce, safety, scheduling, or talent across Nestlé's 350+ factories.</div>
                 <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginTop:14, justifyContent:"center" }}>
                   {PROMPTS.map((p,i)=>(
                     <button key={i} onClick={()=>{ setInput(p); }}
-                      style={{ padding:"5px 10px", fontSize:11, fontWeight:500, background:"#FFFFFF", border:"1px solid #E0E0E0", borderRadius:20, color:"#374151", cursor:"pointer" }}>
+                      style={{ padding:"5px 10px", fontSize:11, fontWeight:500, background:"#FFFFFF", border:"1px solid #E0E0E0", borderRadius:20, color:"#3a5068", cursor:"pointer" }}>
                       {p}
                     </button>
                   ))}
@@ -2018,7 +2047,7 @@ function JouleWidget({ currentUser }) {
                 )}
                 <div style={{
                   maxWidth:"80%", padding:"9px 12px", borderRadius:m.role==="user"?"14px 14px 2px 14px":"14px 14px 14px 2px",
-                  background:m.role==="user"?"#E8312A":"#FFFFFF",
+                  background:m.role==="user"?"#0a3161":"#ffffff",
                   color:m.role==="user"?"#fff":"#1A1A1A",
                   fontSize:12, lineHeight:1.6, whiteSpace:"pre-wrap",
                   boxShadow:"0 1px 3px rgba(0,0,0,0.06)",
@@ -2045,7 +2074,7 @@ function JouleWidget({ currentUser }) {
               value={input} onChange={e=>setInput(e.target.value)}
               onKeyDown={e=>e.key==="Enter"&&send()}
               placeholder="Ask about workforce, safety, skills…"
-              style={{ flex:1, padding:"8px 12px", fontSize:12, background:"#F8F9FA", border:"1px solid #E8E8E8", borderRadius:20, color:"#1A1A1A", outline:"none" }}
+              style={{ flex:1, padding:"8px 12px", fontSize:12, background:"#f0f4f9", border:"1px solid #E8E8E8", borderRadius:20, color:"#0d1f35", outline:"none" }}
             />
             <button onClick={send} disabled={loading||!input.trim()}
               style={{ width:34, height:34, borderRadius:"50%", background:loading||!input.trim()?"#E8E8E8":"#E8312A", border:"none", color:"#fff", cursor:loading||!input.trim()?"not-allowed":"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, flexShrink:0 }}>
@@ -2056,7 +2085,7 @@ function JouleWidget({ currentUser }) {
           {/* Clear */}
           {messages.length > 0 && (
             <div style={{ padding:"4px 12px 8px", textAlign:"center" }}>
-              <button onClick={()=>setMessages([])} style={{ fontSize:10, color:"#9CA3AF", background:"none", border:"none", cursor:"pointer" }}>Clear conversation</button>
+              <button onClick={()=>setMessages([])} style={{ fontSize:10, color:"#7a8fa8", background:"none", border:"none", cursor:"pointer" }}>Clear conversation</button>
             </div>
           )}
         </div>
@@ -2128,11 +2157,11 @@ function UserManagementTab() {
     <div>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
         <div>
-          <h2 style={{ fontSize:20, fontWeight:700, color:"#1A1A1A", margin:"0 0 4px" }}>⚙ User Management</h2>
-          <p style={{ fontSize:13, color:"#6B7280", margin:0 }}>Manage access credentials for the Nestlé EOS platform</p>
+          <h2 style={{ fontSize:18, fontWeight:600, color:"#0d1f35", margin:"0 0 4px" }}>⚙ User Management</h2>
+          <p style={{ fontSize:13, color:"#7a8fa8", margin:0 }}>Manage access credentials for the Nestlé EOS platform</p>
         </div>
         <button onClick={()=>setShowAdd(s=>!s)}
-          style={{ padding:"9px 18px", fontSize:13, fontWeight:600, background:"#005695", border:"none", borderRadius:8, color:"#fff", cursor:"pointer" }}>
+          style={{ padding:"9px 18px", fontSize:13, fontWeight:600, background:"#0a3161", border:"none", borderRadius:8, color:"#fff", cursor:"pointer" }}>
           {showAdd ? "Cancel" : "+ Add User"}
         </button>
       </div>
@@ -2148,29 +2177,29 @@ function UserManagementTab() {
 
       {/* Add user form */}
       {showAdd && (
-        <div style={{ background:"#FFFFFF", border:"1px solid #EDEDED", borderRadius:12, padding:20, marginBottom:20, boxShadow:"0 1px 4px rgba(0,0,0,0.06)" }}>
-          <div style={{ fontWeight:700, fontSize:14, marginBottom:16, color:"#1A1A1A" }}>New User</div>
+        <div style={{ background:"#ffffff", border:"1px solid rgba(10,49,97,0.09)", borderRadius:10, padding:20, marginBottom:20, boxShadow:"0 2px 12px rgba(10,49,97,0.08)" }}>
+          <div style={{ fontWeight:700, fontSize:14, marginBottom:16, color:"#0d1f35" }}>New User</div>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12, marginBottom:12 }}>
             {[["username","Username (login ID)","text"],["password","Password (min 8 chars)","password"],["name","Full Name","text"]].map(([k,lbl,type])=>(
               <div key={k}>
-                <label style={{ fontSize:11, fontWeight:600, color:"#6B7280", textTransform:"uppercase", letterSpacing:"0.06em", display:"block", marginBottom:4 }}>{lbl}</label>
+                <label style={{ fontSize:11, fontWeight:600, color:"#3a5068", textTransform:"uppercase", letterSpacing:"0.06em", display:"block", marginBottom:4 }}>{lbl}</label>
                 <input type={type} value={form[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))}
-                  style={{ width:"100%", padding:"8px 12px", fontSize:13, background:"#F8F9FA", border:"1px solid #E2E8F0", borderRadius:7, color:"#1A1A1A", outline:"none", boxSizing:"border-box" }} />
+                  style={{ width:"100%", padding:"8px 12px", fontSize:13, background:"#f0f4f9", border:"1px solid #E2E8F0", borderRadius:7, color:"#0d1f35", outline:"none", boxSizing:"border-box" }} />
               </div>
             ))}
           </div>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12, marginBottom:16 }}>
             {[["role","Job Title / Role","text"],["zone","Zone / Location","text"]].map(([k,lbl,type])=>(
               <div key={k}>
-                <label style={{ fontSize:11, fontWeight:600, color:"#6B7280", textTransform:"uppercase", letterSpacing:"0.06em", display:"block", marginBottom:4 }}>{lbl}</label>
+                <label style={{ fontSize:11, fontWeight:600, color:"#3a5068", textTransform:"uppercase", letterSpacing:"0.06em", display:"block", marginBottom:4 }}>{lbl}</label>
                 <input type={type} value={form[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))}
-                  style={{ width:"100%", padding:"8px 12px", fontSize:13, background:"#F8F9FA", border:"1px solid #E2E8F0", borderRadius:7, color:"#1A1A1A", outline:"none", boxSizing:"border-box" }} />
+                  style={{ width:"100%", padding:"8px 12px", fontSize:13, background:"#f0f4f9", border:"1px solid #E2E8F0", borderRadius:7, color:"#0d1f35", outline:"none", boxSizing:"border-box" }} />
               </div>
             ))}
             <div>
-              <label style={{ fontSize:11, fontWeight:600, color:"#6B7280", textTransform:"uppercase", letterSpacing:"0.06em", display:"block", marginBottom:4 }}>Access Level</label>
+              <label style={{ fontSize:11, fontWeight:600, color:"#3a5068", textTransform:"uppercase", letterSpacing:"0.06em", display:"block", marginBottom:4 }}>Access Level</label>
               <select value={form.access} onChange={e=>setForm(f=>({...f,access:e.target.value}))}
-                style={{ width:"100%", padding:"8px 12px", fontSize:13, background:"#F8F9FA", border:"1px solid #E2E8F0", borderRadius:7, color:"#1A1A1A", outline:"none", boxSizing:"border-box" }}>
+                style={{ width:"100%", padding:"8px 12px", fontSize:13, background:"#f0f4f9", border:"1px solid #E2E8F0", borderRadius:7, color:"#0d1f35", outline:"none", boxSizing:"border-box" }}>
                 {[["admin","Admin (full access)"],["full","Full Access"],["zone","Zone HR"],["safety","Safety Only"],["ops","Operations Only"],["view","View Only"]].map(([v,l])=>(
                   <option key={v} value={v}>{l}</option>
                 ))}
@@ -2178,41 +2207,41 @@ function UserManagementTab() {
             </div>
           </div>
           <div style={{ display:"flex", gap:10 }}>
-            <button onClick={addUser} style={{ padding:"8px 20px", fontSize:13, fontWeight:600, background:"#E8312A", border:"none", borderRadius:7, color:"#fff", cursor:"pointer" }}>Create User</button>
-            <button onClick={()=>setShowAdd(false)} style={{ padding:"8px 16px", fontSize:13, fontWeight:600, background:"#F5F5F5", border:"1px solid #E0E0E0", borderRadius:7, color:"#6B7280", cursor:"pointer" }}>Cancel</button>
+            <button onClick={addUser} style={{ padding:"8px 20px", fontSize:13, fontWeight:600, background:"#0a3161", border:"none", borderRadius:7, color:"#fff", cursor:"pointer" }}>Create User</button>
+            <button onClick={()=>setShowAdd(false)} style={{ padding:"8px 16px", fontSize:13, fontWeight:600, background:"#F5F5F5", border:"1px solid #E0E0E0", borderRadius:7, color:"#3a5068", cursor:"pointer" }}>Cancel</button>
           </div>
         </div>
       )}
 
       {/* Users table */}
-      <div style={{ background:"#FFFFFF", border:"1px solid #EDEDED", borderRadius:12, overflow:"hidden", boxShadow:"0 1px 4px rgba(0,0,0,0.06)" }}>
+      <div style={{ background:"#FFFFFF", border:"1px solid rgba(10,49,97,0.09)", borderRadius:12, overflow:"hidden", boxShadow:"0 2px 12px rgba(10,49,97,0.06)" }}>
         <table style={{ width:"100%", borderCollapse:"collapse" }}>
           <thead>
-            <tr style={{ background:"#F8FAFC" }}>
+            <tr style={{ background:"#f0f4f9" }}>
               {["User","Role","Zone","Access Level","Created","Actions"].map(h=>(
-                <th key={h} style={{ padding:"11px 16px", textAlign:"left", fontSize:10, fontWeight:600, color:"#94A3B8", letterSpacing:"0.08em", textTransform:"uppercase", borderBottom:"2px solid #F1F5F9" }}>{h}</th>
+                <th key={h} style={{ padding:"11px 16px", textAlign:"left", fontSize:10, fontWeight:600, color:"#7a8fa8", letterSpacing:"0.06em", textTransform:"uppercase", borderBottom:"1px solid rgba(10,49,97,0.09)" }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {loading && <tr><td colSpan={6} style={{ padding:40, textAlign:"center", color:"#9CA3AF" }}>Loading users…</td></tr>}
+            {loading && <tr><td colSpan={6} style={{ padding:40, textAlign:"center", color:"#7a8fa8" }}>Loading users…</td></tr>}
             {!loading && users.map(u => {
               const hue = u.username.split("").reduce((a,c)=>a+c.charCodeAt(0),0) % 360;
               return (
-                <tr key={u.username} style={{ borderBottom:"1px solid #F0F0F0" }}>
+                <tr key={u.username} style={{ borderBottom:"1px solid rgba(10,49,97,0.07)" }}>
                   <td style={{ padding:"12px 16px" }}>
                     <div style={{ display:"flex", alignItems:"center", gap:10 }}>
                       <div style={{ width:32, height:32, borderRadius:"50%", background:`hsl(${hue},70%,92%)`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, color:`hsl(${hue},70%,32%)`, flexShrink:0 }}>
                         {u.name.split(" ").map(p=>p[0]).join("").slice(0,2).toUpperCase()}
                       </div>
                       <div>
-                        <div style={{ fontWeight:600, fontSize:13, color:"#1A1A1A" }}>{u.name}</div>
+                        <div style={{ fontWeight:600, fontSize:13, color:"#0d1f35" }}>{u.name}</div>
                         <div style={{ fontSize:11, color:"#94A3B8", fontFamily:"monospace" }}>{u.username}</div>
                       </div>
                     </div>
                   </td>
-                  <td style={{ padding:"12px 16px", fontSize:12, color:"#374151" }}>{u.role}</td>
-                  <td style={{ padding:"12px 16px", fontSize:12, color:"#374151" }}>{u.zone}</td>
+                  <td style={{ padding:"12px 16px", fontSize:12, color:"#3a5068" }}>{u.role}</td>
+                  <td style={{ padding:"12px 16px", fontSize:12, color:"#3a5068" }}>{u.zone}</td>
                   <td style={{ padding:"12px 16px" }}>
                     <Badge label={u.access.toUpperCase()} color={ACCESS_COLORS[u.access]||"blue"} />
                   </td>
@@ -2223,13 +2252,13 @@ function UserManagementTab() {
                         <div style={{ display:"flex", gap:6, alignItems:"center" }}>
                           <input type="password" value={newPwd} onChange={e=>setNewPwd(e.target.value)} placeholder="New password" autoFocus
                             style={{ padding:"5px 10px", fontSize:12, border:"1px solid #E2E8F0", borderRadius:6, outline:"none", width:130 }} />
-                          <button onClick={()=>changePassword(u.username)} style={{ padding:"5px 10px", fontSize:11, fontWeight:600, background:"#005695", border:"none", borderRadius:5, color:"#fff", cursor:"pointer" }}>Save</button>
-                          <button onClick={()=>{ setShowPwdFor(null); setNewPwd(""); }} style={{ padding:"5px 8px", fontSize:11, background:"#F5F5F5", border:"1px solid #E0E0E0", borderRadius:5, color:"#6B7280", cursor:"pointer" }}>✕</button>
+                          <button onClick={()=>changePassword(u.username)} style={{ padding:"5px 10px", fontSize:11, fontWeight:600, background:"#0a3161", border:"none", borderRadius:5, color:"#fff", cursor:"pointer" }}>Save</button>
+                          <button onClick={()=>{ setShowPwdFor(null); setNewPwd(""); }} style={{ padding:"5px 8px", fontSize:11, background:"#F5F5F5", border:"1px solid #E0E0E0", borderRadius:5, color:"#3a5068", cursor:"pointer" }}>✕</button>
                         </div>
                       ) : (
                         <>
                           <button onClick={()=>{ setShowPwdFor(u.username); setNewPwd(""); }}
-                            style={{ padding:"5px 10px", fontSize:11, fontWeight:600, background:"#F0F4F8", border:"1px solid #E2E8F0", borderRadius:5, color:"#374151", cursor:"pointer" }}>
+                            style={{ padding:"5px 10px", fontSize:11, fontWeight:600, background:"#F0F4F8", border:"1px solid #E2E8F0", borderRadius:5, color:"#3a5068", cursor:"pointer" }}>
                             Change Password
                           </button>
                           <button onClick={()=>deleteUser(u.username)}
@@ -2280,7 +2309,7 @@ function NotificationBell({ user }) {
   return (
     <div style={{ position:"relative" }}>
       <button onClick={()=>{ setOpen(o=>!o); if(!open) load(); }}
-        style={{ position:"relative", width:34, height:34, borderRadius:8, background:"#F5F5F5", border:"1px solid #E8E8E8", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontSize:16 }}>
+        style={{ position:"relative", width:34, height:34, borderRadius:7, background:"transparent", border:"1px solid rgba(10,49,97,0.09)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontSize:16 }}>
         🔔
         {unread > 0 && (
           <div style={{ position:"absolute", top:-4, right:-4, width:16, height:16, borderRadius:"50%", background:"#E8312A", color:"#fff", fontSize:9, fontWeight:800, display:"flex", alignItems:"center", justifyContent:"center", border:"2px solid #F5F5F5" }}>{unread>9?"9+":unread}</div>
@@ -2288,20 +2317,20 @@ function NotificationBell({ user }) {
       </button>
       {open && (
         <div style={{ position:"absolute", right:0, top:42, width:320, background:"#FFFFFF", border:"1px solid #E8E8E8", borderRadius:12, boxShadow:"0 8px 24px rgba(0,0,0,0.12)", zIndex:500, overflow:"hidden" }}>
-          <div style={{ padding:"12px 16px", borderBottom:"1px solid #F0F0F0", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-            <span style={{ fontWeight:700, fontSize:13, color:"#1A1A1A" }}>Notifications</span>
+          <div style={{ padding:"12px 16px", borderBottom:"1px solid rgba(10,49,97,0.07)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+            <span style={{ fontWeight:700, fontSize:13, color:"#0d1f35" }}>Notifications</span>
             {unread > 0 && <Badge label={unread+" unread"} color="red" />}
           </div>
           <div style={{ maxHeight:360, overflowY:"auto" }}>
-            {notifs.length===0 && <div style={{ padding:20, textAlign:"center", color:"#9CA3AF", fontSize:13 }}>No notifications</div>}
+            {notifs.length===0 && <div style={{ padding:20, textAlign:"center", color:"#7a8fa8", fontSize:13 }}>No notifications</div>}
             {notifs.slice(0,15).map(n=>(
               <div key={n.id} onClick={()=>markRead(n.id)}
-                style={{ padding:"10px 16px", borderBottom:"1px solid #F8F8F8", background:n.read?"#FFFFFF":"#F8FBFF", cursor:"pointer", display:"flex", gap:10, alignItems:"flex-start" }}>
+                style={{ padding:"10px 16px", borderBottom:"1px solid rgba(10,49,97,0.05)", background:n.read?"#FFFFFF":"#F8FBFF", cursor:"pointer", display:"flex", gap:10, alignItems:"flex-start" }}>
                 <span style={{ fontSize:16, flexShrink:0, marginTop:1 }}>{typeIcon[n.type]||"📢"}</span>
                 <div style={{ flex:1 }}>
-                  <div style={{ fontSize:12, fontWeight:n.read?400:600, color:"#1A1A1A", marginBottom:2 }}>{n.title}</div>
-                  <div style={{ fontSize:11, color:"#6B7280", lineHeight:1.4 }}>{n.message}</div>
-                  <div style={{ fontSize:10, color:"#9CA3AF", marginTop:3 }}>{new Date(n.created_at).toLocaleString()}</div>
+                  <div style={{ fontSize:12, fontWeight:n.read?400:600, color:"#0d1f35", marginBottom:2 }}>{n.title}</div>
+                  <div style={{ fontSize:11, color:"#3a5068", lineHeight:1.4 }}>{n.message}</div>
+                  <div style={{ fontSize:10, color:"#7a8fa8", marginTop:3 }}>{new Date(n.created_at).toLocaleString()}</div>
                 </div>
                 {!n.read && <div style={{ width:7, height:7, borderRadius:"50%", background:"#E8312A", flexShrink:0, marginTop:4 }} />}
               </div>
@@ -2383,11 +2412,11 @@ function EmployeeProfilesTab() {
       {/* LEFT PANEL — list */}
       <div style={{ width:selected?"55%":"100%", borderRight:"1px solid #EDEDED", display:"flex", flexDirection:"column", transition:"width 0.2s" }}>
         {/* Header */}
-        <div style={{ padding:"18px 24px 14px", borderBottom:"1px solid #F0F0F0", background:"#FFFFFF" }}>
+        <div style={{ padding:"18px 24px 14px", borderBottom:"1px solid rgba(10,49,97,0.07)", background:"#FFFFFF" }}>
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
             <div>
-              <h2 style={{ fontSize:18, fontWeight:700, color:"#1A1A1A", margin:"0 0 2px" }}>👥 Employee Profiles</h2>
-              <p style={{ fontSize:12, color:"#6B7280", margin:0 }}>{total.toLocaleString()} employees across all factories</p>
+              <h2 style={{ fontSize:18, fontWeight:600, color:"#0d1f35", margin:"0 0 2px" }}>👥 Employee Profiles</h2>
+              <p style={{ fontSize:12, color:"#7a8fa8", margin:0 }}>{total.toLocaleString()} employees across all factories</p>
             </div>
           </div>
 
@@ -2400,9 +2429,9 @@ function EmployeeProfilesTab() {
               { label:"Avg Safety",value:(stats.avgSafety||0)+"%", col:"#389E0D" },
               { label:"On Overtime",value:stats.overtime||0, col:"#6D28D9" },
             ].map(s=>(
-              <div key={s.label} style={{ background:"#F8FAFC", borderRadius:8, padding:"8px 10px", borderLeft:"3px solid "+s.col }}>
-                <div style={{ fontSize:9, fontWeight:600, color:"#9CA3AF", textTransform:"uppercase", letterSpacing:"0.06em" }}>{s.label}</div>
-                <div style={{ fontSize:16, fontWeight:700, color:"#1A1A1A", marginTop:2 }}>{s.value}</div>
+              <div key={s.label} style={{ background:"#f0f4f9", borderRadius:8, padding:"8px 10px", borderLeft:"3px solid "+s.col }}>
+                <div style={{ fontSize:9, fontWeight:600, color:"#7a8fa8", textTransform:"uppercase", letterSpacing:"0.06em" }}>{s.label}</div>
+                <div style={{ fontSize:16, fontWeight:700, color:"#0d1f35", marginTop:2 }}>{s.value}</div>
               </div>
             ))}
           </div>
@@ -2411,7 +2440,7 @@ function EmployeeProfilesTab() {
           <div style={{ display:"flex", gap:8, flexWrap:"wrap", alignItems:"center" }}>
             <input value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>e.key==="Enter"&&applyFilters()}
               placeholder="Search name, role, ID…"
-              style={{ flex:1, minWidth:160, padding:"7px 12px", fontSize:12, background:"#F8F9FA", border:"1px solid #E2E8F0", borderRadius:7, color:"#1A1A1A", outline:"none" }} />
+              style={{ flex:1, minWidth:160, padding:"7px 12px", fontSize:12, background:"#f0f4f9", border:"1px solid #E2E8F0", borderRadius:7, color:"#0d1f35", outline:"none" }} />
             {[
               ["Factory", filterFac, setFilterFac, [["ALL","All Factories"],...(factories.map(f=>[f.id,f.name]))]],
               ["Dept",    filterDept,setFilterDept,[["ALL","All Depts"],...depts.map(d=>[d,d.length>20?d.slice(0,20)+"…":d])]],
@@ -2419,24 +2448,24 @@ function EmployeeProfilesTab() {
               ["Risk",    filterRisk,setFilterRisk,[["ALL","All Risk"],["CRITICAL","Critical"],["HIGH","High"],["MEDIUM","Medium"],["LOW","Low"]]],
             ].map(([lbl,val,setter,opts])=>(
               <select key={lbl} value={val} onChange={e=>{ setter(e.target.value); }}
-                style={{ padding:"6px 10px", fontSize:12, background:"#FFFFFF", border:"1px solid #E2E8F0", borderRadius:7, color:"#374151" }}>
+                style={{ padding:"6px 10px", fontSize:12, background:"#FFFFFF", border:"1px solid #E2E8F0", borderRadius:7, color:"#3a5068" }}>
                 {opts.map(([v,l])=><option key={v} value={v}>{l}</option>)}
               </select>
             ))}
-            <button onClick={applyFilters} style={{ padding:"7px 16px", fontSize:12, fontWeight:600, background:"#005695", border:"none", borderRadius:7, color:"#fff", cursor:"pointer" }}>Search</button>
+            <button onClick={applyFilters} style={{ padding:"7px 16px", fontSize:12, fontWeight:600, background:"#0a3161", border:"none", borderRadius:7, color:"#fff", cursor:"pointer" }}>Search</button>
           </div>
         </div>
 
         {/* Table */}
         <div style={{ flex:1, overflowY:"auto", background:"#FFFFFF" }}>
-          {loading && <div style={{ padding:32, textAlign:"center", color:"#9CA3AF" }}>Loading employees…</div>}
-          {!loading && employees.length === 0 && <div style={{ padding:32, textAlign:"center", color:"#9CA3AF" }}>No employees found. Run <code>node seed_employees.js</code> to seed data.</div>}
+          {loading && <div style={{ padding:32, textAlign:"center", color:"#7a8fa8" }}>Loading employees…</div>}
+          {!loading && employees.length === 0 && <div style={{ padding:32, textAlign:"center", color:"#7a8fa8" }}>No employees found. Run <code>node seed_employees.js</code> to seed data.</div>}
           {!loading && employees.length > 0 && (
             <table style={{ width:"100%", borderCollapse:"collapse" }}>
               <thead>
-                <tr style={{ background:"#F8FAFC", position:"sticky", top:0, zIndex:1 }}>
+                <tr style={{ background:"#f0f4f9", position:"sticky", top:0, zIndex:1 }}>
                   {["Employee","Role / Dept","Factory","Shift","Fatigue","Safety","Overtime"].map(h=>(
-                    <th key={h} style={{ padding:"9px 14px", textAlign:"left", fontSize:10, fontWeight:600, color:"#94A3B8", letterSpacing:"0.07em", textTransform:"uppercase", borderBottom:"2px solid #F1F5F9", whiteSpace:"nowrap" }}>{h}</th>
+                    <th key={h} style={{ padding:"9px 14px", textAlign:"left", fontSize:10, fontWeight:600, color:"#7a8fa8", letterSpacing:"0.06em", textTransform:"uppercase", borderBottom:"1px solid rgba(10,49,97,0.09)", whiteSpace:"nowrap" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -2447,8 +2476,8 @@ function EmployeeProfilesTab() {
                   const isSelected = selected?.id === emp.id;
                   return (
                     <tr key={emp.id} onClick={()=>{ setSelected(emp); setAiAdvice(""); }}
-                      style={{ borderBottom:"1px solid #F5F5F5", cursor:"pointer", background:isSelected?"#EBF4FF":"transparent", transition:"background 0.1s" }}
-                      onMouseOver={e=>{ if(!isSelected) e.currentTarget.style.background="#F8FBFF"; }}
+                      style={{ borderBottom:"1px solid rgba(10,49,97,0.06)", cursor:"pointer", background:isSelected?"#e8f1fb":"transparent", transition:"background 0.1s" }}
+                      onMouseOver={e=>{ if(!isSelected) e.currentTarget.style.background="#f7fafd"; }}
                       onMouseOut={e=>{ if(!isSelected) e.currentTarget.style.background="transparent"; }}>
                       <td style={{ padding:"10px 14px" }}>
                         <div style={{ display:"flex", alignItems:"center", gap:9 }}>
@@ -2456,16 +2485,16 @@ function EmployeeProfilesTab() {
                             {(emp.first_name?.[0]||"?")+( emp.last_name?.[0]||"")}
                           </div>
                           <div>
-                            <div style={{ fontSize:12, fontWeight:600, color:"#1A1A1A" }}>{emp.name}</div>
+                            <div style={{ fontSize:12, fontWeight:600, color:"#0d1f35" }}>{emp.name}</div>
                             <div style={{ fontSize:10, color:"#94A3B8", fontFamily:"monospace" }}>{emp.id}</div>
                           </div>
                         </div>
                       </td>
                       <td style={{ padding:"10px 14px" }}>
-                        <div style={{ fontSize:12, color:"#374151" }}>{emp.job_title}</div>
-                        <div style={{ fontSize:10, color:"#9CA3AF" }}>{emp.department}</div>
+                        <div style={{ fontSize:12, color:"#3a5068" }}>{emp.job_title}</div>
+                        <div style={{ fontSize:10, color:"#7a8fa8" }}>{emp.department}</div>
                       </td>
-                      <td style={{ padding:"10px 14px", fontSize:11, color:"#6B7280" }}>{facName(emp.factory_id)}</td>
+                      <td style={{ padding:"10px 14px", fontSize:11, color:"#3a5068" }}>{facName(emp.factory_id)}</td>
                       <td style={{ padding:"10px 14px" }}>
                         <span style={{ fontSize:11, fontWeight:600, padding:"2px 8px", borderRadius:4,
                           background:emp.shift==="Night"?"#F9F0FF":emp.shift==="Afternoon"?"#E6F4FF":"#FFF7E6",
@@ -2486,7 +2515,7 @@ function EmployeeProfilesTab() {
                           <div style={{ width:40, height:4, background:"#F0F0F0", borderRadius:99, overflow:"hidden" }}>
                             <div style={{ width:(emp.safety_score||0)+"%", height:"100%", background:emp.safety_score>80?"#10B981":emp.safety_score>65?"#F59E0B":"#EF4444" }} />
                           </div>
-                          <span style={{ fontSize:11, color:"#6B7280" }}>{emp.safety_score}</span>
+                          <span style={{ fontSize:11, color:"#3a5068" }}>{emp.safety_score}</span>
                         </div>
                       </td>
                       <td style={{ padding:"10px 14px", fontSize:12, fontWeight:700, color:emp.overtime_hrs>10?"#CF1322":emp.overtime_hrs>5?"#D46B08":"#389E0D" }}>
@@ -2503,7 +2532,7 @@ function EmployeeProfilesTab() {
         {/* Pagination */}
         {total > PAGE_SIZE && (
           <div style={{ padding:"10px 20px", borderTop:"1px solid #F0F0F0", display:"flex", alignItems:"center", justifyContent:"space-between", background:"#FFFFFF" }}>
-            <span style={{ fontSize:12, color:"#6B7280" }}>Showing {page*PAGE_SIZE+1}–{Math.min((page+1)*PAGE_SIZE,total)} of {total.toLocaleString()}</span>
+            <span style={{ fontSize:12, color:"#3a5068" }}>Showing {page*PAGE_SIZE+1}–{Math.min((page+1)*PAGE_SIZE,total)} of {total.toLocaleString()}</span>
             <div style={{ display:"flex", gap:4 }}>
               <button onClick={()=>load(page-1)} disabled={page===0}
                 style={{ padding:"4px 12px", fontSize:12, background:page===0?"#F5F5F5":"#FFFFFF", border:"1px solid #E0E0E0", borderRadius:5, cursor:page===0?"not-allowed":"pointer", color:page===0?"#9CA3AF":"#374151" }}>‹ Prev</button>
@@ -2536,12 +2565,12 @@ function EmployeeProfilesTab() {
                   </div>
                 ); })()}
                 <div>
-                  <div style={{ fontSize:16, fontWeight:700, color:"#1A1A1A" }}>{selected.name}</div>
-                  <div style={{ fontSize:13, color:"#6B7280" }}>{selected.job_title}</div>
+                  <div style={{ fontSize:16, fontWeight:700, color:"#0d1f35" }}>{selected.name}</div>
+                  <div style={{ fontSize:13, color:"#3a5068" }}>{selected.job_title}</div>
                   <div style={{ fontSize:11, color:"#94A3B8", marginTop:2 }}>{selected.id} · {facName(selected.factory_id)}</div>
                 </div>
               </div>
-              <button onClick={()=>setSelected(null)} style={{ background:"none", border:"1px solid #E0E0E0", borderRadius:6, padding:"4px 10px", fontSize:12, color:"#6B7280", cursor:"pointer" }}>✕</button>
+              <button onClick={()=>setSelected(null)} style={{ background:"none", border:"1px solid #E0E0E0", borderRadius:6, padding:"4px 10px", fontSize:12, color:"#3a5068", cursor:"pointer" }}>✕</button>
             </div>
             <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
               <Badge label={selected.status||"Active"} color={selected.status==="Overtime Alert"?"yellow":"green"} />
@@ -2562,15 +2591,15 @@ function EmployeeProfilesTab() {
                 { label:"Tenure",         value:Math.floor((selected.tenure_months||0)/12)+"y "+(selected.tenure_months%12)+"m", col:"#374151" },
               ].map(m=>(
                 <div key={m.label} style={{ background:"#FFFFFF", border:"1px solid #EDEDED", borderRadius:8, padding:"10px 14px" }}>
-                  <div style={{ fontSize:10, fontWeight:600, color:"#9CA3AF", textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:3 }}>{m.label}</div>
+                  <div style={{ fontSize:10, fontWeight:600, color:"#7a8fa8", textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:3 }}>{m.label}</div>
                   <div style={{ fontSize:18, fontWeight:700, color:m.col }}>{m.value}</div>
                 </div>
               ))}
             </div>
 
             {/* Personal details */}
-            <div style={{ background:"#FFFFFF", border:"1px solid #EDEDED", borderRadius:10, padding:16 }}>
-              <div style={{ fontSize:11, fontWeight:700, color:"#9CA3AF", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:12 }}>Personal Details</div>
+            <div style={{ background:"#ffffff", border:"1px solid rgba(10,49,97,0.09)", borderRadius:10, padding:16 }}>
+              <div style={{ fontSize:11, fontWeight:700, color:"#7a8fa8", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:12 }}>Personal Details</div>
               {[
                 ["Full Name",    selected.name],
                 ["Employee ID",  selected.id],
@@ -2583,16 +2612,16 @@ function EmployeeProfilesTab() {
                 ["Std Hours",    (selected.standard_hours||40)+"h/week"],
                 ["Work Days",    (() => { try { return JSON.parse(selected.work_days||"[]").join(", "); } catch(e) { return "Mon–Fri"; } })()],
               ].map(([k,v])=>(
-                <div key={k} style={{ display:"flex", justifyContent:"space-between", padding:"5px 0", borderBottom:"1px solid #F8F8F8" }}>
-                  <span style={{ fontSize:12, color:"#6B7280" }}>{k}</span>
-                  <span style={{ fontSize:12, fontWeight:500, color:"#1A1A1A" }}>{v}</span>
+                <div key={k} style={{ display:"flex", justifyContent:"space-between", padding:"5px 0", borderBottom:"1px solid rgba(10,49,97,0.05)" }}>
+                  <span style={{ fontSize:12, color:"#3a5068" }}>{k}</span>
+                  <span style={{ fontSize:12, fontWeight:500, color:"#0d1f35" }}>{v}</span>
                 </div>
               ))}
             </div>
 
             {/* Risk bars */}
-            <div style={{ background:"#FFFFFF", border:"1px solid #EDEDED", borderRadius:10, padding:16 }}>
-              <div style={{ fontSize:11, fontWeight:700, color:"#9CA3AF", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:12 }}>Risk Assessment</div>
+            <div style={{ background:"#ffffff", border:"1px solid rgba(10,49,97,0.09)", borderRadius:10, padding:16 }}>
+              <div style={{ fontSize:11, fontWeight:700, color:"#7a8fa8", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:12 }}>Risk Assessment</div>
               {[
                 ["Fatigue Risk",   selected.fatigue_score||0, 100, RISK_COL[selected.fatigue_risk]||"#005695"],
                 ["Safety Score",   selected.safety_score||0,  100, selected.safety_score>80?"#389E0D":selected.safety_score>65?"#D46B08":"#CF1322"],
@@ -2600,7 +2629,7 @@ function EmployeeProfilesTab() {
               ].map(([lbl,val,max,col])=>(
                 <div key={lbl} style={{ marginBottom:12 }}>
                   <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}>
-                    <span style={{ fontSize:12, color:"#374151" }}>{lbl}</span>
+                    <span style={{ fontSize:12, color:"#3a5068" }}>{lbl}</span>
                     <span style={{ fontSize:12, fontWeight:600, color:col }}>{Math.round(val)}{lbl==="Safety Score"?"/100":"%"}</span>
                   </div>
                   <div style={{ height:7, background:"#F0F0F0", borderRadius:99, overflow:"hidden" }}>
@@ -2611,11 +2640,11 @@ function EmployeeProfilesTab() {
             </div>
 
             {/* AI Advisor */}
-            <div style={{ background:"#F8F9FA", border:"1px solid #EDEDED", borderRadius:10, padding:16 }}>
+            <div style={{ background:"#f0f4f9", border:"1px solid #EDEDED", borderRadius:10, padding:16 }}>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
                 <div>
-                  <div style={{ fontSize:12, fontWeight:700, color:"#1A1A1A" }}>⚡ AI HR Advisor</div>
-                  <div style={{ fontSize:10, color:"#9CA3AF" }}>Personalised development plan</div>
+                  <div style={{ fontSize:12, fontWeight:700, color:"#0d1f35" }}>⚡ AI HR Advisor</div>
+                  <div style={{ fontSize:10, color:"#7a8fa8" }}>Personalised development plan</div>
                 </div>
                 <button onClick={()=>generateAiAdvice(selected)} disabled={aiLoading}
                   style={{ padding:"5px 12px", fontSize:11, fontWeight:600, background:aiLoading?"#F5F5F5":"#E8312A", border:aiLoading?"1px solid #E0E0E0":"none", borderRadius:6, color:aiLoading?"#9CA3AF":"#fff", cursor:"pointer" }}>
@@ -2623,8 +2652,8 @@ function EmployeeProfilesTab() {
                 </button>
               </div>
               {aiLoading && <div style={{ display:"flex", gap:4 }}>{[0,1,2].map(i=><div key={i} style={{ width:6,height:6,borderRadius:"50%",background:"#E8312A",animation:`bounce 1s ease-in-out ${i*0.2}s infinite` }}/>)}</div>}
-              {aiAdvice && <div style={{ fontSize:12, lineHeight:1.8, whiteSpace:"pre-wrap", color:"#1A1A1A" }}>{aiAdvice}</div>}
-              {!aiAdvice && !aiLoading && <div style={{ fontSize:12, color:"#9CA3AF" }}>Click Generate for a personalised HR action plan based on this employee's profile.</div>}
+              {aiAdvice && <div style={{ fontSize:12, lineHeight:1.8, whiteSpace:"pre-wrap", color:"#0d1f35" }}>{aiAdvice}</div>}
+              {!aiAdvice && !aiLoading && <div style={{ fontSize:12, color:"#7a8fa8" }}>Click Generate for a personalised HR action plan based on this employee's profile.</div>}
             </div>
           </div>
         </div>
@@ -2644,21 +2673,23 @@ function HomePage({ onNavigate, currentUser, dbStats, dbFactories }) {
   const APPS = [
     { id:"overview",   icon:"🏠", label:"Workforce Overview",      desc:"Factory workforce status, KPIs and full employee roster drill-down", color:"#005695", badge:null },
     { id:"analytics",  icon:"📊", label:"Analytics & Insights",     desc:"Live charts — workforce, safety incidents, fatigue trends, skills gap", color:"#6D28D9", badge:"New" },
+    { id:"agents",     icon:"🕵️", label:"AI Agents",                  desc:"Autonomous Safety Sentinel, Action Agent and live-data HR Copilot",    color:"#0F766E", badge:"AI" },
+    { id:"mas",        icon:"🧠", label:"Multi-Agent System",          desc:"Orchestrator + 4 parallel specialist agents — Safety, Fatigue, Skills, Workforce", color:"#1A1A2E", badge:"New" },
     { id:"employees",  icon:"👥", label:"Employee Profiles",        desc:"Searchable employee database with profiles, risk scores and AI advisor", color:"#389E0D", badge:dbStats?.employees ? dbStats.employees.toLocaleString()+" emp" : null },
     { id:"safety",     icon:"🛡", label:"Safety Intelligence Hub",  desc:"Incident tracking, factory safety scorecard, SF absence patterns", color:"#E8312A", badge:dbStats?.openIncidents ? dbStats.openIncidents+" open" : null },
     { id:"fatigue",    icon:"⚡", label:"Fatigue Risk Intelligence", desc:"Live fatigue alerts, overtime analysis and manager notifications", color:"#D46B08", badge:dbStats?.pendingAlerts ? dbStats.pendingAlerts+" alerts" : null },
     { id:"skills",     icon:"🎓", label:"Skills Intelligence",       desc:"Skills gap analysis, training roadmaps and NCE maturity tracking", color:"#531DAB", badge:null },
     { id:"operations", icon:"🏭", label:"Operations & Scheduling",   desc:"AI shift optimisation, utilisation analytics and throughput KPIs", color:"#1D7A8A", badge:null },
     { id:"copilot",    icon:"🤖", label:"HR AI Copilot",             desc:"Ask anything about workforce, safety, scheduling or talent data", color:"#6D28D9", badge:"AI Powered" },
-    ...(currentUser?.access==="admin" ? [{ id:"users", icon:"⚙", label:"User Management", desc:"Manage EOS users, roles, access levels and passwords", color:"#6B7280", badge:"Admin" }] : []),
+    ...(currentUser?.access==="admin" ? [{ id:"users", icon:"⚙", label:"User Management", desc:"Manage EOS users, roles, access levels and passwords", color:"#3a5068", badge:"Admin" }] : []),
   ];
 
   const factoryHighlights = (dbFactories.length > 0 ? dbFactories : []).slice(0, 6);
 
   return (
-    <div style={{ minHeight:"calc(100vh - 100px)", background:"#F5F7FA" }}>
+    <div style={{ minHeight:"calc(100vh - 100px)", background:"#f0f4f9" }}>
       {/* Hero banner */}
-      <div style={{ background:"linear-gradient(135deg, #1A1A2E 0%, #16213E 50%, #0F3460 100%)", padding:"40px 48px 36px", position:"relative", overflow:"hidden" }}>
+      <div style={{ background:"linear-gradient(135deg, #061e3d 0%, #0a3161 50%, #164e8a 100%)", padding:"40px 48px 36px", position:"relative", overflow:"hidden" }}>
         {/* Background pattern */}
         <div style={{ position:"absolute", inset:0, opacity:0.05, backgroundImage:"radial-gradient(circle at 20% 50%, #E8312A 0%, transparent 50%), radial-gradient(circle at 80% 20%, #005695 0%, transparent 40%)" }} />
 
@@ -2710,7 +2741,7 @@ function HomePage({ onNavigate, currentUser, dbStats, dbFactories }) {
               <div style={{ width:44,height:44,borderRadius:10,background:k.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0 }}>{k.icon}</div>
               <div>
                 <div style={{ fontSize:24,fontWeight:800,color:k.col }}>{k.value}</div>
-                <div style={{ fontSize:11,color:"#9CA3AF",marginTop:1 }}>{k.label}</div>
+                <div style={{ fontSize:11,color:"#7a8fa8",marginTop:1 }}>{k.label}</div>
               </div>
             </div>
           ))}
@@ -2719,13 +2750,13 @@ function HomePage({ onNavigate, currentUser, dbStats, dbFactories }) {
         {/* App tiles */}
         <div style={{ marginBottom:32 }}>
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
-            <h2 style={{ fontSize:16, fontWeight:700, color:"#1A1A1A", margin:0 }}>Applications</h2>
-            <span style={{ fontSize:12, color:"#9CA3AF" }}>{APPS.length} modules available</span>
+            <h2 style={{ fontSize:16, fontWeight:700, color:"#0d1f35", margin:0 }}>Applications</h2>
+            <span style={{ fontSize:12, color:"#7a8fa8" }}>{APPS.length} modules available</span>
           </div>
           <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:14 }}>
             {APPS.map(app=>(
               <button key={app.id} onClick={()=>onNavigate(app.id)}
-                style={{ background:"#FFFFFF", border:"1px solid #EDEDED", borderRadius:14, padding:"22px 20px 18px", textAlign:"left", cursor:"pointer", transition:"all 0.18s", boxShadow:"0 1px 4px rgba(0,0,0,0.04)", position:"relative", overflow:"hidden" }}
+                style={{ background:"#ffffff", border:"1px solid rgba(10,49,97,0.09)", borderRadius:10, padding:"22px 20px 18px", textAlign:"left", cursor:"pointer", transition:"all 0.18s", boxShadow:"0 1px 4px rgba(0,0,0,0.04)", position:"relative", overflow:"hidden" }}
                 onMouseOver={e=>{ e.currentTarget.style.transform="translateY(-3px)"; e.currentTarget.style.boxShadow="0 8px 24px rgba(0,0,0,0.1)"; e.currentTarget.style.borderColor=app.color+"55"; }}
                 onMouseOut={e=>{ e.currentTarget.style.transform="translateY(0)"; e.currentTarget.style.boxShadow="0 1px 4px rgba(0,0,0,0.04)"; e.currentTarget.style.borderColor="#EDEDED"; }}>
                 {/* Color accent top bar */}
@@ -2737,8 +2768,8 @@ function HomePage({ onNavigate, currentUser, dbStats, dbFactories }) {
                   </div>
                 )}
                 <div style={{ width:46,height:46,borderRadius:12,background:app.color+"15",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,marginBottom:14,border:`1px solid ${app.color}20` }}>{app.icon}</div>
-                <div style={{ fontSize:13,fontWeight:700,color:"#1A1A1A",marginBottom:6 }}>{app.label}</div>
-                <div style={{ fontSize:11,color:"#9CA3AF",lineHeight:1.55 }}>{app.desc}</div>
+                <div style={{ fontSize:13,fontWeight:700,color:"#0d1f35",marginBottom:6 }}>{app.label}</div>
+                <div style={{ fontSize:11,color:"#7a8fa8",lineHeight:1.55 }}>{app.desc}</div>
                 <div style={{ marginTop:14,display:"flex",alignItems:"center",gap:4,fontSize:11,fontWeight:600,color:app.color }}>
                   Open <span style={{ fontSize:14 }}>→</span>
                 </div>
@@ -2751,7 +2782,7 @@ function HomePage({ onNavigate, currentUser, dbStats, dbFactories }) {
         {factoryHighlights.length > 0 && (
           <div>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
-              <h2 style={{ fontSize:16, fontWeight:700, color:"#1A1A1A", margin:0 }}>Factory Status</h2>
+              <h2 style={{ fontSize:16, fontWeight:700, color:"#0d1f35", margin:0 }}>Factory Status</h2>
               <button onClick={()=>onNavigate("overview")} style={{ fontSize:12, fontWeight:600, color:"#005695", background:"none", border:"none", cursor:"pointer" }}>View all →</button>
             </div>
             <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:12 }}>
@@ -2763,19 +2794,19 @@ function HomePage({ onNavigate, currentUser, dbStats, dbFactories }) {
                   <div key={f.id} style={{ background:"#FFFFFF", borderRadius:12, padding:"16px 18px", border:"1px solid #EDEDED", borderLeft:"4px solid "+col, boxShadow:"0 1px 4px rgba(0,0,0,0.04)" }}>
                     <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:10 }}>
                       <div>
-                        <div style={{ fontSize:13, fontWeight:700, color:"#1A1A1A" }}>{f.name}</div>
-                        <div style={{ fontSize:11, color:"#9CA3AF", marginTop:1 }}>{f.country} · {f.zone}</div>
+                        <div style={{ fontSize:13, fontWeight:700, color:"#0d1f35" }}>{f.name}</div>
+                        <div style={{ fontSize:11, color:"#7a8fa8", marginTop:1 }}>{f.country} · {f.zone}</div>
                       </div>
                       <span style={{ fontSize:10, fontWeight:700, padding:"3px 8px", borderRadius:5, background:col+"18", color:col }}>{risk.toUpperCase()}</span>
                     </div>
                     <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6 }}>
-                      <span style={{ fontSize:11, color:"#6B7280" }}>Utilization</span>
+                      <span style={{ fontSize:11, color:"#3a5068" }}>Utilization</span>
                       <span style={{ fontSize:11, fontWeight:700, color:util>90?col:"#374151" }}>{util}%</span>
                     </div>
                     <div style={{ height:5, background:"#F0F0F0", borderRadius:99, overflow:"hidden" }}>
                       <div style={{ width:util+"%", height:"100%", background:col, borderRadius:99, transition:"width 0.6s" }} />
                     </div>
-                    <div style={{ fontSize:11, color:"#9CA3AF", marginTop:8 }}>{(f.dbWorkers||f.workers||0).toLocaleString()} employees</div>
+                    <div style={{ fontSize:11, color:"#7a8fa8", marginTop:8 }}>{(f.dbWorkers||f.workers||0).toLocaleString()} employees</div>
                   </div>
                 );
               })}
@@ -2829,13 +2860,13 @@ function HBarChart({ data, color="#005695" }) {
         const pct = Math.round((d.value/max)*100);
         return (
           <div key={i} style={{ display:"flex", alignItems:"center", gap:10 }}>
-            <div style={{ width:130, fontSize:11, color:"#374151", textAlign:"right", flexShrink:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{d.label}</div>
+            <div style={{ width:130, fontSize:11, color:"#3a5068", textAlign:"right", flexShrink:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{d.label}</div>
             <div style={{ flex:1, height:18, background:"#F0F2F5", borderRadius:4, overflow:"hidden" }}>
               <div style={{ width:pct+"%", height:"100%", background:col, borderRadius:4, transition:"width 0.6s ease", display:"flex", alignItems:"center", justifyContent:"flex-end", paddingRight:4 }}>
                 {pct > 15 && <span style={{ fontSize:9, color:"#fff", fontWeight:700 }}>{d.value}</span>}
               </div>
             </div>
-            {pct <= 15 && <span style={{ fontSize:10, color:"#6B7280", minWidth:24 }}>{d.value}</span>}
+            {pct <= 15 && <span style={{ fontSize:10, color:"#3a5068", minWidth:24 }}>{d.value}</span>}
           </div>
         );
       })}
@@ -2906,12 +2937,12 @@ function LineChart({ data, height=100, color="#005695", label="" }) {
 
 function StatCard({ label, value, sub, icon, col="#005695", bg="#E6F4FF" }) {
   return (
-    <div style={{ background:"#FFFFFF", border:"1px solid #EDEDED", borderRadius:10, padding:"14px 16px", borderLeft:"3px solid "+col, boxShadow:"0 1px 3px rgba(0,0,0,0.04)", display:"flex", alignItems:"center", gap:12 }}>
+    <div style={{ background:"#FFFFFF", border:"1px solid rgba(10,49,97,0.09)", borderRadius:10, padding:"14px 16px", borderLeft:"3px solid "+col, boxShadow:"0 2px 8px rgba(10,49,97,0.06)", display:"flex", alignItems:"center", gap:12 }}>
       <div style={{ width:40, height:40, borderRadius:10, background:bg, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, flexShrink:0 }}>{icon}</div>
       <div>
-        <div style={{ fontSize:9, fontWeight:600, color:"#9CA3AF", textTransform:"uppercase", letterSpacing:"0.08em" }}>{label}</div>
+        <div style={{ fontSize:9, fontWeight:600, color:"#7a8fa8", textTransform:"uppercase", letterSpacing:"0.08em" }}>{label}</div>
         <div style={{ fontSize:22, fontWeight:700, color:col, marginTop:1 }}>{value}</div>
-        {sub && <div style={{ fontSize:10, color:"#9CA3AF", marginTop:1 }}>{sub}</div>}
+        {sub && <div style={{ fontSize:10, color:"#7a8fa8", marginTop:1 }}>{sub}</div>}
       </div>
     </div>
   );
@@ -2956,7 +2987,7 @@ function AnalyticsTab() {
     loadAll();
   }, []); // eslint-disable-line
 
-  if (loading) return <div style={{ padding:40, textAlign:"center", color:"#9CA3AF" }}>Loading analytics data…</div>;
+  if (loading) return <div style={{ padding:40, textAlign:"center", color:"#7a8fa8" }}>Loading analytics data…</div>;
   if (!data) return null;
 
   const { facs, incs, fat, skills } = data;
@@ -3037,16 +3068,16 @@ function AnalyticsTab() {
   const incTypeData = Object.entries(incType).map(([k,v])=>({ label:k, value:v, color:"#E8312A" }))
     .sort((a,b)=>b.value-a.value).slice(0,6);
 
-  const CARD = { background:"#FFFFFF", border:"1px solid #EDEDED", borderRadius:12, padding:20, boxShadow:"0 1px 4px rgba(0,0,0,0.04)" };
-  const TITLE = { fontSize:13, fontWeight:700, color:"#1A1A1A", marginBottom:4 };
-  const SUB   = { fontSize:11, color:"#9CA3AF", marginBottom:16, display:"block" };
+  const CARD = { background:"#FFFFFF", border:"1px solid rgba(10,49,97,0.09)", borderRadius:12, padding:20, boxShadow:"0 2px 12px rgba(10,49,97,0.06)" };
+  const TITLE = { fontSize:13, fontWeight:600, color:"#0d1f35", marginBottom:3 };
+  const SUB   = { fontSize:11, color:"#7a8fa8", marginBottom:14, display:"block" };
 
   return (
     <div>
       {/* Header */}
       <div style={{ marginBottom:22 }}>
-        <h2 style={{ fontSize:20, fontWeight:700, color:"#1A1A1A", margin:"0 0 4px" }}>📊 Analytics & Insights</h2>
-        <p style={{ fontSize:13, color:"#6B7280", margin:0 }}>Live workforce intelligence across all factories · Data from local database</p>
+        <h2 style={{ fontSize:18, fontWeight:600, color:"#0d1f35", margin:"0 0 4px" }}>📊 Analytics & Insights</h2>
+        <p style={{ fontSize:13, color:"#7a8fa8", margin:0 }}>Live workforce intelligence across all factories · Data from local database</p>
       </div>
 
       {/* KPI strip */}
@@ -3082,7 +3113,7 @@ function AnalyticsTab() {
             {incBySev.map(s=>(
               <div key={s.label} style={{ display:"flex", alignItems:"center", gap:5, fontSize:11 }}>
                 <div style={{ width:8, height:8, borderRadius:2, background:s.color }} />
-                <span style={{ color:"#374151" }}>{s.label}</span>
+                <span style={{ color:"#3a5068" }}>{s.label}</span>
                 <span style={{ fontWeight:700, color:s.color }}>{s.value}</span>
               </div>
             ))}
@@ -3097,22 +3128,22 @@ function AnalyticsTab() {
             <DonutChart data={fatDonut.length>0?fatDonut:[{label:"None",value:1,color:"#E8E8E8"}]} size={130} />
             <div style={{ flex:1 }}>
               {fatDonut.map(d=>(
-                <div key={d.label} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"5px 0", borderBottom:"1px solid #F8F8F8" }}>
+                <div key={d.label} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"5px 0", borderBottom:"1px solid rgba(10,49,97,0.05)" }}>
                   <div style={{ display:"flex", alignItems:"center", gap:6 }}>
                     <div style={{ width:8, height:8, borderRadius:"50%", background:d.color }} />
-                    <span style={{ fontSize:12, color:"#374151" }}>{d.label}</span>
+                    <span style={{ fontSize:12, color:"#3a5068" }}>{d.label}</span>
                   </div>
                   <div>
                     <span style={{ fontSize:13, fontWeight:700, color:d.color }}>{d.value}</span>
-                    <span style={{ fontSize:10, color:"#9CA3AF", marginLeft:4 }}>({Math.round(d.value/Math.max(fat.length,1)*100)}%)</span>
+                    <span style={{ fontSize:10, color:"#7a8fa8", marginLeft:4 }}>({Math.round(d.value/Math.max(fat.length,1)*100)}%)</span>
                   </div>
                 </div>
               ))}
-              {fatDonut.length===0 && <div style={{ fontSize:12, color:"#9CA3AF" }}>No active fatigue alerts</div>}
+              {fatDonut.length===0 && <div style={{ fontSize:12, color:"#7a8fa8" }}>No active fatigue alerts</div>}
             </div>
           </div>
           <div style={{ marginTop:14 }}>
-            <div style={{ fontSize:11, color:"#9CA3AF", marginBottom:8 }}>Alerts by factory</div>
+            <div style={{ fontSize:11, color:"#7a8fa8", marginBottom:8 }}>Alerts by factory</div>
             <HBarChart data={fatByFac.length>0?fatByFac:[{ label:"None", value:0 }]} color="#D46B08" />
           </div>
         </div>
@@ -3132,7 +3163,7 @@ function AnalyticsTab() {
           <div style={TITLE}>NCE Maturity Score</div>
           <span style={SUB}>Nestlé Continuous Excellence by factory</span>
           <BarChart data={nceData} height={120} maxOverride={100} />
-          <div style={{ marginTop:8, fontSize:10, color:"#9CA3AF" }}>Target: 80pts · Global avg: {nceData.length?Math.round(nceData.reduce((s,d)=>s+d.value,0)/nceData.length):0}pts</div>
+          <div style={{ marginTop:8, fontSize:10, color:"#7a8fa8" }}>Target: 80pts · Global avg: {nceData.length?Math.round(nceData.reduce((s,d)=>s+d.value,0)/nceData.length):0}pts</div>
         </div>
 
         {/* Incident breakdown */}
@@ -3146,7 +3177,7 @@ function AnalyticsTab() {
               {incStatus.map(s=>(
                 <div key={s.label} style={{ display:"flex", alignItems:"center", gap:6, marginBottom:4 }}>
                   <div style={{ width:8, height:8, borderRadius:2, background:s.color }} />
-                  <span style={{ fontSize:11, color:"#374151" }}>{s.label}: <strong style={{ color:s.color }}>{s.value}</strong></span>
+                  <span style={{ fontSize:11, color:"#3a5068" }}>{s.label}: <strong style={{ color:s.color }}>{s.value}</strong></span>
                 </div>
               ))}
             </div>
@@ -3166,21 +3197,628 @@ function AnalyticsTab() {
               color:(f.fssc_coverage||75)>=90?"#389E0D":(f.fssc_coverage||75)>=75?"#D46B08":"#E8312A",
             }))} />
           </div>
-          <div style={{ flex:1, padding:"10px 14px", background:"#F8F9FA", borderRadius:8, border:"1px solid #EDEDED" }}>
-            <div style={{ fontSize:11, color:"#9CA3AF", marginBottom:8 }}>Quick Stats</div>
+          <div style={{ flex:1, padding:"10px 14px", background:"#f0f4f9", borderRadius:8, border:"1px solid #EDEDED" }}>
+            <div style={{ fontSize:11, color:"#7a8fa8", marginBottom:8 }}>Quick Stats</div>
             {[
               ["Factories ≥90%", facs.filter(f=>(f.fssc_coverage||75)>=90).length+"/"+facs.length, "#389E0D"],
               ["Avg Coverage",   Math.round(facs.reduce((s,f)=>s+(f.fssc_coverage||75),0)/Math.max(facs.length,1))+"%", "#005695"],
               ["Gap to Target",  Math.max(0,90-Math.round(facs.reduce((s,f)=>s+(f.fssc_coverage||75),0)/Math.max(facs.length,1)))+"%", "#D46B08"],
             ].map(([l,v,c])=>(
-              <div key={l} style={{ display:"flex", justifyContent:"space-between", padding:"4px 0", borderBottom:"1px solid #F0F0F0" }}>
-                <span style={{ fontSize:11, color:"#6B7280" }}>{l}</span>
+              <div key={l} style={{ display:"flex", justifyContent:"space-between", padding:"4px 0", borderBottom:"1px solid rgba(10,49,97,0.07)" }}>
+                <span style={{ fontSize:11, color:"#3a5068" }}>{l}</span>
                 <span style={{ fontSize:12, fontWeight:700, color:c }}>{v}</span>
               </div>
             ))}
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+
+// ══════════════════════════════════════════════════════════════════
+// AI AGENTS TAB
+// ══════════════════════════════════════════════════════════════════
+function AIAgentsTab() {
+  const [sentinelLog,   setSentinelLog]   = useState([]);
+  const [sentinelRunning, setSentinelRunning] = useState(false);
+  const [sentinelReport,  setSentinelReport]  = useState("");
+  const [sentinelSteps,   setSentinelSteps]   = useState([]);
+
+  const [actionFactory, setActionFactory]   = useState("IN-04");
+  const [actionTarget,  setActionTarget]    = useState("reduce fatigue risk");
+  const [actionRunning, setActionRunning]   = useState(false);
+  const [actionReport,  setActionReport]    = useState("");
+  const [actionSteps,   setActionSteps]     = useState([]);
+
+  const [copilotMsg,    setCopilotMsg]      = useState("");
+  const [copilotHistory,setCopilotHistory]  = useState([]);
+  const [copilotLoading,setCopilotLoading]  = useState(false);
+
+  const [agentLog,      setAgentLog]        = useState([]);
+  const [factories,     setFactories]       = useState([]);
+
+  const chatEndRef = useRef(null);
+  useEffect(()=>{ chatEndRef.current?.scrollIntoView({ behavior:"smooth" }); }, [copilotHistory]);
+
+  useEffect(()=>{
+    fetch(API_BASE+"/agents/log", { headers:authH() }).then(r=>r.json()).then(d=>{ if(Array.isArray(d)) setAgentLog(d); }).catch(()=>{});
+    fetch(API_BASE+"/api/factories").then(r=>r.json()).then(d=>{ if(Array.isArray(d)) setFactories(d); }).catch(()=>{});
+  }, []); // eslint-disable-line
+
+  const runSentinel = async () => {
+    setSentinelRunning(true); setSentinelReport(""); setSentinelSteps([]);
+    try {
+      const res  = await fetch(API_BASE+"/agents/sentinel", { method:"POST", headers:authH(), body:JSON.stringify({}) });
+      const data = await res.json();
+      setSentinelReport(data.report||data.error||"");
+      setSentinelSteps(data.steps||[]);
+      // Refresh log
+      fetch(API_BASE+"/agents/log", { headers:authH() }).then(r=>r.json()).then(d=>{ if(Array.isArray(d)) setAgentLog(d); });
+    } catch(e) { setSentinelReport("Error: "+e.message); }
+    setSentinelRunning(false);
+  };
+
+  const runActionAgent = async () => {
+    setActionRunning(true); setActionReport(""); setActionSteps([]);
+    try {
+      const res  = await fetch(API_BASE+"/agents/actions", { method:"POST", headers:authH(), body:JSON.stringify({ factory_id:actionFactory, target:actionTarget }) });
+      const data = await res.json();
+      setActionReport(data.report||data.error||"");
+      setActionSteps(data.steps||[]);
+    } catch(e) { setActionReport("Error: "+e.message); }
+    setActionRunning(false);
+  };
+
+  const sendCopilot = async () => {
+    if (!copilotMsg.trim() || copilotLoading) return;
+    const userMsg = copilotMsg.trim();
+    setCopilotHistory(h=>[...h, { role:"user", content:userMsg }]);
+    setCopilotMsg(""); setCopilotLoading(true);
+    try {
+      const res  = await fetch(API_BASE+"/agents/copilot", { method:"POST", headers:authH(), body:JSON.stringify({ message:userMsg }) });
+      const data = await res.json();
+      const reply = data.reply || data.error || "No response";
+      setCopilotHistory(h=>[...h,
+        { role:"assistant", content:reply, tool_calls:data.tool_calls||0, steps:data.steps||[] }
+      ]);
+    } catch(e) { setCopilotHistory(h=>[...h, { role:"assistant", content:"Error: "+e.message }]); }
+    setCopilotLoading(false);
+  };
+
+  const CARD  = { background:"#FFFFFF", border:"1px solid rgba(10,49,97,0.09)", borderRadius:12, padding:20, boxShadow:"0 2px 12px rgba(10,49,97,0.06)" };
+  const STEP_ICON = { input:"🔧", output:"✅" };
+
+  const StepLog = ({ steps }) => {
+    if (!steps || !steps.length) return null;
+    const toolCalls = steps.filter(s=>s.input);
+    return (
+      <div style={{ marginTop:14, background:"#f0f4f9", borderRadius:8, padding:12 }}>
+        <div style={{ fontSize:10, fontWeight:700, color:"#7a8fa8", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:8 }}>
+          Agent Tool Calls ({toolCalls.length})
+        </div>
+        {toolCalls.map((s,i)=>(
+          <div key={i} style={{ display:"flex", gap:8, alignItems:"flex-start", marginBottom:8, padding:"6px 10px", background:"#FFFFFF", borderRadius:6, border:"1px solid #EDEDED" }}>
+            <span style={{ fontSize:14, flexShrink:0 }}>🔧</span>
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={{ fontSize:11, fontWeight:700, color:"#005695" }}>{s.tool}</div>
+              <div style={{ fontSize:10, color:"#7a8fa8", fontFamily:"monospace", wordBreak:"break-all" }}>
+                {JSON.stringify(s.input).slice(0,120)}{JSON.stringify(s.input).length>120?"…":""}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  return (
+    <div>
+      {/* Header */}
+      <div style={{ marginBottom:22 }}>
+        <h2 style={{ fontSize:18, fontWeight:600, color:"#0d1f35", margin:"0 0 4px" }}>🕵️ AI Agents</h2>
+        <p style={{ fontSize:13, color:"#7a8fa8", margin:0 }}>Autonomous AI workers powered by Claude — query live data, take actions, notify managers</p>
+      </div>
+
+      {/* Agent cards row */}
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:14, marginBottom:20 }}>
+        {[
+          { icon:"🛡", name:"Safety Sentinel", desc:"Scans all factories, auto-creates incidents and alerts", status:"Ready", col:"#E8312A", bg:"#FFF1F0" },
+          { icon:"⚡", name:"Action Agent",    desc:"Finds high-risk employees and applies interventions", status:"Ready", col:"#D46B08", bg:"#FFF7E6" },
+          { icon:"🤖", name:"HR Copilot (RAG)",desc:"Answers questions using live database — not guesses",  status:"Active", col:"#005695", bg:"#E6F4FF" },
+        ].map(a=>(
+          <div key={a.name} style={{ background:"#ffffff", border:"1px solid rgba(10,49,97,0.09)", borderRadius:10, padding:18, boxShadow:"0 1px 4px rgba(0,0,0,0.04)", borderTop:"3px solid "+a.col }}>
+            <div style={{ display:"flex", gap:10, alignItems:"flex-start" }}>
+              <div style={{ width:40, height:40, borderRadius:10, background:a.bg, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, flexShrink:0 }}>{a.icon}</div>
+              <div>
+                <div style={{ fontSize:13, fontWeight:700, color:"#0d1f35" }}>{a.name}</div>
+                <div style={{ fontSize:11, color:"#3a5068", marginTop:2, lineHeight:1.5 }}>{a.desc}</div>
+                <div style={{ marginTop:8, fontSize:10, fontWeight:600, padding:"2px 8px", borderRadius:99, background:a.bg, color:a.col, display:"inline-block" }}>{a.status}</div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:16 }}>
+
+        {/* Safety Sentinel Agent */}
+        <div style={CARD}>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:14 }}>
+            <div>
+              <div style={{ fontSize:14, fontWeight:700, color:"#0d1f35" }}>🛡 Safety Sentinel Agent</div>
+              <div style={{ fontSize:11, color:"#7a8fa8", marginTop:2 }}>Autonomous scan across all 6 factories</div>
+            </div>
+            <button onClick={runSentinel} disabled={sentinelRunning}
+              style={{ padding:"8px 18px", fontSize:12, fontWeight:700, background:sentinelRunning?"#f0f4f9":"#0a3161", border:sentinelRunning?"1px solid #E0E0E0":"none", borderRadius:8, color:sentinelRunning?"#9CA3AF":"#fff", cursor:sentinelRunning?"not-allowed":"pointer", whiteSpace:"nowrap" }}>
+              {sentinelRunning ? (
+                <span style={{ display:"flex", alignItems:"center", gap:6 }}>
+                  {[0,1,2].map(i=><span key={i} style={{ width:5,height:5,borderRadius:"50%",background:"#9CA3AF",display:"inline-block",animation:`bounce 1s ease-in-out ${i*0.2}s infinite` }}/>)}
+                  Scanning…
+                </span>
+              ) : "▶ Run Sentinel"}
+            </button>
+          </div>
+
+          <div style={{ padding:"10px 14px", background:"#f0f4f9", borderRadius:8, marginBottom:12, fontSize:11, color:"#3a5068", lineHeight:1.6 }}>
+            <strong style={{ color:"#0d1f35" }}>What this agent does:</strong><br/>
+            1. Queries all 6 factory safety stats via DB tools<br/>
+            2. Identifies critical fatigue + incident patterns<br/>
+            3. Auto-creates incidents and alerts in the database<br/>
+            4. Sends manager notifications for critical findings
+          </div>
+
+          {sentinelRunning && (
+            <div style={{ padding:"12px 14px", background:"#FFF7E6", border:"1px solid #FFD591", borderRadius:8, fontSize:12, color:"#D46B08" }}>
+              <div style={{ fontWeight:700, marginBottom:4 }}>⚡ Agent Running…</div>
+              Agent is scanning factories, querying employee data, and evaluating risks. This takes 15–30 seconds.
+            </div>
+          )}
+
+          {sentinelReport && !sentinelRunning && (
+            <>
+              <div style={{ padding:"12px 14px", background:"#F6FFED", border:"1px solid #B7EB8F", borderRadius:8, fontSize:12, color:"#0d1f35", lineHeight:1.7, whiteSpace:"pre-wrap", maxHeight:220, overflowY:"auto" }}>
+                <div style={{ fontSize:10, fontWeight:700, color:"#389E0D", marginBottom:6 }}>✅ AGENT REPORT</div>
+                {sentinelReport}
+              </div>
+              <StepLog steps={sentinelSteps} />
+            </>
+          )}
+        </div>
+
+        {/* Action Agent */}
+        <div style={CARD}>
+          <div style={{ fontSize:14, fontWeight:700, color:"#0d1f35", marginBottom:4 }}>⚡ HR Action Agent</div>
+          <div style={{ fontSize:11, color:"#7a8fa8", marginBottom:14 }}>Autonomously applies interventions to high-risk employees</div>
+
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:14 }}>
+            <div>
+              <label style={{ fontSize:11, fontWeight:600, color:"#3a5068", textTransform:"uppercase", letterSpacing:"0.06em", display:"block", marginBottom:4 }}>Target Factory</label>
+              <select value={actionFactory} onChange={e=>setActionFactory(e.target.value)}
+                style={{ width:"100%", padding:"7px 10px", fontSize:12, background:"#FFFFFF", border:"1px solid #E2E8F0", borderRadius:7, color:"#3a5068" }}>
+                <option value="">All Factories</option>
+                {factories.map(f=><option key={f.id} value={f.id}>{f.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize:11, fontWeight:600, color:"#3a5068", textTransform:"uppercase", letterSpacing:"0.06em", display:"block", marginBottom:4 }}>Objective</label>
+              <select value={actionTarget} onChange={e=>setActionTarget(e.target.value)}
+                style={{ width:"100%", padding:"7px 10px", fontSize:12, background:"#FFFFFF", border:"1px solid #E2E8F0", borderRadius:7, color:"#3a5068" }}>
+                <option value="reduce fatigue risk">Reduce Fatigue Risk</option>
+                <option value="improve safety scores">Improve Safety Scores</option>
+                <option value="cap overtime hours above 44h">Cap Overtime Hours</option>
+                <option value="schedule safety briefings for low safety scores">Safety Briefings</option>
+              </select>
+            </div>
+          </div>
+
+          <button onClick={runActionAgent} disabled={actionRunning}
+            style={{ width:"100%", padding:"9px", fontSize:12, fontWeight:700, background:actionRunning?"#f0f4f9":"#00b5a8", border:actionRunning?"1px solid #E0E0E0":"none", borderRadius:8, color:actionRunning?"#9CA3AF":"#fff", cursor:actionRunning?"not-allowed":"pointer", marginBottom:14 }}>
+            {actionRunning ? "Agent Working…" : "▶ Run Action Agent"}
+          </button>
+
+          {actionRunning && (
+            <div style={{ padding:"10px 14px", background:"#FFF7E6", border:"1px solid #FFD591", borderRadius:8, fontSize:12, color:"#D46B08" }}>
+              ⚡ Agent is querying employees, evaluating risk, and applying interventions…
+            </div>
+          )}
+
+          {actionReport && !actionRunning && (
+            <>
+              <div style={{ padding:"12px 14px", background:"#F6FFED", border:"1px solid #B7EB8F", borderRadius:8, fontSize:12, color:"#0d1f35", lineHeight:1.7, whiteSpace:"pre-wrap", maxHeight:200, overflowY:"auto" }}>
+                <div style={{ fontSize:10, fontWeight:700, color:"#389E0D", marginBottom:6 }}>✅ ACTIONS APPLIED ({actionSteps.filter(s=>s.input).length} tool calls)</div>
+                {actionReport}
+              </div>
+              <StepLog steps={actionSteps} />
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* RAG HR Copilot */}
+      <div style={{ ...CARD, marginBottom:16 }}>
+        <div style={{ fontSize:14, fontWeight:700, color:"#0d1f35", marginBottom:4 }}>🤖 HR Copilot — RAG Powered</div>
+        <div style={{ fontSize:11, color:"#7a8fa8", marginBottom:14 }}>Unlike the basic Joule widget, this agent <strong style={{ color:"#005695" }}>queries the live database</strong> before answering — no hallucinations, real employee data</div>
+
+        {/* Quick prompts */}
+        <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:14 }}>
+          {[
+            "Which factory has the most critical fatigue alerts?",
+            "How many employees are on overtime in Pune?",
+            "What are the top 3 skills gaps across all factories?",
+            "Summarise safety incidents across all factories",
+            "Which factory needs urgent attention today?",
+          ].map((p,i)=>(
+            <button key={i} onClick={()=>setCopilotMsg(p)}
+              style={{ padding:"5px 10px", fontSize:11, fontWeight:500, background:"#f0f4f9", border:"1px solid #E2E8F0", borderRadius:20, color:"#3a5068", cursor:"pointer" }}>
+              {p}
+            </button>
+          ))}
+        </div>
+
+        {/* Chat */}
+        <div style={{ background:"#f0f4f9", borderRadius:10, padding:14, minHeight:160, maxHeight:320, overflowY:"auto", marginBottom:12 }}>
+          {copilotHistory.length===0 && (
+            <div style={{ textAlign:"center", padding:"20px 0", color:"#7a8fa8", fontSize:13 }}>
+              Ask anything — the agent will query live database before answering
+            </div>
+          )}
+          {copilotHistory.map((m,i)=>(
+            <div key={i} style={{ marginBottom:12, display:"flex", justifyContent:m.role==="user"?"flex-end":"flex-start" }}>
+              <div style={{ maxWidth:"85%", padding:"9px 13px", borderRadius:m.role==="user"?"14px 14px 2px 14px":"14px 14px 14px 2px",
+                background:m.role==="user"?"#0a3161":"#ffffff",
+                color:m.role==="user"?"#fff":"#1A1A1A",
+                fontSize:12, lineHeight:1.65, whiteSpace:"pre-wrap",
+                boxShadow:"0 1px 3px rgba(0,0,0,0.06)",
+                border:m.role==="assistant"?"1px solid #F0F0F0":"none" }}>
+                {m.role==="assistant" && m.tool_calls>0 && (
+                  <div style={{ fontSize:9, fontWeight:700, color:"#005695", marginBottom:5, textTransform:"uppercase", letterSpacing:"0.08em" }}>
+                    🔧 Used {m.tool_calls} database tool{m.tool_calls>1?"s":""}
+                  </div>
+                )}
+                {m.content}
+              </div>
+            </div>
+          ))}
+          {copilotLoading && (
+            <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+              <div style={{ background:"#FFFFFF", border:"1px solid #F0F0F0", borderRadius:"14px 14px 14px 2px", padding:"9px 14px", display:"flex", gap:4 }}>
+                {[0,1,2].map(i=><div key={i} style={{ width:6,height:6,borderRadius:"50%",background:"#CBD5E1",animation:`bounce 1s ease-in-out ${i*0.2}s infinite` }}/>)}
+              </div>
+              <span style={{ fontSize:11, color:"#7a8fa8" }}>Querying database…</span>
+            </div>
+          )}
+          <div ref={chatEndRef} />
+        </div>
+
+        <div style={{ display:"flex", gap:8 }}>
+          <input value={copilotMsg} onChange={e=>setCopilotMsg(e.target.value)}
+            onKeyDown={e=>e.key==="Enter"&&sendCopilot()}
+            placeholder="Ask about any employee, factory, safety or workforce data…"
+            style={{ flex:1, padding:"9px 14px", fontSize:13, background:"#FFFFFF", border:"1px solid #E2E8F0", borderRadius:20, color:"#0d1f35", outline:"none" }} />
+          <button onClick={sendCopilot} disabled={copilotLoading||!copilotMsg.trim()}
+            style={{ width:36, height:36, borderRadius:"50%", background:copilotLoading||!copilotMsg.trim()?"#E8E8E8":"#E8312A", border:"none", color:"#fff", cursor:"pointer", fontSize:14, flexShrink:0 }}>➤</button>
+        </div>
+        {copilotHistory.length>0 && (
+          <button onClick={()=>setCopilotHistory([])} style={{ marginTop:6, fontSize:10, color:"#7a8fa8", background:"none", border:"none", cursor:"pointer" }}>Clear conversation</button>
+        )}
+      </div>
+
+      {/* Agent Activity Log */}
+      <div style={CARD}>
+        <div style={{ fontSize:14, fontWeight:700, color:"#0d1f35", marginBottom:4 }}>📋 Agent Activity Log</div>
+        <div style={{ fontSize:11, color:"#7a8fa8", marginBottom:14 }}>All autonomous agent actions recorded in the audit database</div>
+        {agentLog.length === 0 ? (
+          <div style={{ padding:20, textAlign:"center", color:"#7a8fa8", fontSize:12 }}>No agent activity yet. Run an agent above to see the log.</div>
+        ) : (
+          <table style={{ width:"100%", borderCollapse:"collapse" }}>
+            <thead>
+              <tr style={{ background:"#f0f4f9" }}>
+                {["Action","Entity","Performed By","Timestamp"].map(h=>(
+                  <th key={h} style={{ padding:"8px 12px", textAlign:"left", fontSize:10, fontWeight:600, color:"#7a8fa8", letterSpacing:"0.06em", textTransform:"uppercase", borderBottom:"1px solid rgba(10,49,97,0.09)" }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {agentLog.slice(0,20).map(log=>(
+                <tr key={log.id} style={{ borderBottom:"1px solid rgba(10,49,97,0.06)" }}>
+                  <td style={{ padding:"8px 12px" }}>
+                    <span style={{ fontSize:11, fontWeight:600, padding:"2px 8px", borderRadius:4, background:"#E6F4FF", color:"#005695" }}>{log.action}</span>
+                  </td>
+                  <td style={{ padding:"8px 12px", fontSize:11, color:"#3a5068" }}>{log.entity_type||"—"}</td>
+                  <td style={{ padding:"8px 12px", fontSize:11, color:"#3a5068" }}>{log.performed_by||"—"}</td>
+                  <td style={{ padding:"8px 12px", fontSize:11, color:"#7a8fa8" }}>{new Date(log.created_at).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+// ══════════════════════════════════════════════════════════════════
+// MULTI-AGENT SYSTEM TAB
+// ══════════════════════════════════════════════════════════════════
+function MultiAgentTab() {
+  const [task,       setTask]       = useState("");
+  const [running,    setRunning]    = useState(false);
+  const [result,     setResult]     = useState(null);
+  const [error,      setError]      = useState("");
+  const [activeAgent,setActiveAgent]= useState(null);
+  const [msgLog,     setMsgLog]     = useState([]);
+
+  const PRESET_TASKS = [
+    "Give me a full workforce risk assessment across all Nestlé factories",
+    "Identify the top 3 factories that need urgent intervention this week",
+    "Analyse fatigue and safety risks at Pune and Silao and recommend actions",
+    "What is our overall readiness for the FSSC 22000 audit next month?",
+    "Generate a board-level HR briefing covering safety, fatigue and skills",
+  ];
+
+  const AGENTS_META = {
+    orchestrator:  { name:"Orchestrator",   emoji:"🎯", color:"#0d1f35", bg:"#F5F5F5",  desc:"Routes tasks to specialists" },
+    safety_agent:  { name:"Safety Agent",   emoji:"🛡", color:"#E8312A", bg:"#FFF1F0",  desc:"Incidents & FSSC 22000" },
+    fatigue_agent: { name:"Fatigue Agent",  emoji:"⚡", color:"#D46B08", bg:"#FFF7E6",  desc:"Overtime & fatigue risk" },
+    skills_agent:  { name:"Skills Agent",   emoji:"🎓", color:"#531DAB", bg:"#F9F0FF",  desc:"NCE & training gaps" },
+    workforce_agent:{ name:"Workforce Agent",emoji:"👥", color:"#005695", bg:"#E6F4FF", desc:"Headcount & utilisation" },
+  };
+
+  const runMAS = async (taskText) => {
+    const t = taskText || task;
+    if (!t.trim()) return;
+    setRunning(true); setResult(null); setError(""); setMsgLog([]); setActiveAgent("orchestrator");
+
+    // Simulate real-time message bus by polling
+    let pollTimer = null;
+    const simulate = (agents) => {
+      const seq = [
+        { agent:"orchestrator",   msg:"Received task — analysing and routing to specialist agents…",           delay:300  },
+        { agent:agents[0]||"safety_agent",  msg:"Activated — querying database tools…",                       delay:1200 },
+        { agent:agents[1]||"fatigue_agent", msg:"Activated — scanning employee overtime data…",               delay:2000 },
+        { agent:agents[2]||"skills_agent",  msg:"Activated — loading skills gap assessments…",                delay:2800 },
+        { agent:agents[0]||"safety_agent",  msg:"Analysis complete — found critical patterns, reporting…",    delay:4000 },
+        { agent:agents[1]||"fatigue_agent", msg:"Analysis complete — ranked factories by risk score…",        delay:4800 },
+        { agent:agents[2]||"skills_agent",  msg:"Analysis complete — identified top training priorities…",    delay:5600 },
+        { agent:"orchestrator",   msg:"All agents reported — synthesising executive briefing…",               delay:6400 },
+      ];
+      seq.forEach(s => {
+        pollTimer = setTimeout(() => {
+          setActiveAgent(s.agent);
+          setMsgLog(prev => [...prev, { ...s, ts:new Date().toLocaleTimeString() }]);
+        }, s.delay);
+      });
+    };
+
+    try {
+      // Start simulation immediately for responsiveness
+      simulate(["safety_agent","fatigue_agent","skills_agent"]);
+
+      const res  = await fetch(API_BASE+"/agents/orchestrate", {
+        method:"POST", headers:authH(),
+        body:JSON.stringify({ task:t })
+      });
+      const data = await res.json();
+      if (data.error) { setError(data.error); setRunning(false); return; }
+
+      // Replace simulated log with real bus messages
+      if (data.bus_messages) {
+        setMsgLog(data.bus_messages.map(m=>({ agent:m.from, msg:m.payload?.message||m.type, ts:new Date(m.ts).toLocaleTimeString() })));
+      }
+      setResult(data);
+      setActiveAgent(null);
+    } catch(e) {
+      setError(e.message);
+    }
+    setRunning(false);
+  };
+
+  const AgentNode = ({ agentKey, x, y, connected=false }) => {
+    const meta    = AGENTS_META[agentKey] || {};
+    const isActive = activeAgent === agentKey;
+    const hasResult = result?.agentResults?.find(r=>r.agentKey===agentKey);
+    return (
+      <div style={{
+        position:"absolute", left:x, top:y, width:110, textAlign:"center",
+        transform:"translate(-50%,-50%)",
+      }}>
+        <div style={{
+          width:64, height:64, borderRadius:"50%", background:meta.bg,
+          border:`2px solid ${isActive?"#005695":hasResult?meta.color:"#E0E0E0"}`,
+          display:"flex", alignItems:"center", justifyContent:"center",
+          fontSize:26, margin:"0 auto 6px",
+          boxShadow:isActive?"0 0 0 4px #005695"+33:"none",
+          transition:"all 0.3s",
+          animation:isActive?"pulse 1s ease-in-out infinite":"none",
+        }}>{meta.emoji}</div>
+        <div style={{ fontSize:11, fontWeight:600, color:isActive?"#005695":hasResult?meta.color:"#3a5068" }}>{meta.name}</div>
+        <div style={{ fontSize:9, color:"#7a8fa8", marginTop:1 }}>{meta.desc}</div>
+        {hasResult && <div style={{ fontSize:9, color:"#389E0D", marginTop:2 }}>✓ {(hasResult.steps||[]).filter(s=>s.input).length} calls</div>}
+      </div>
+    );
+  };
+
+  return (
+    <div>
+      {/* Header */}
+      <div style={{ marginBottom:22 }}>
+        <h2 style={{ fontSize:18, fontWeight:600, color:"#0d1f35", margin:"0 0 4px" }}>🧠 Multi-Agent System</h2>
+        <p style={{ fontSize:13, color:"#7a8fa8", margin:0 }}>Orchestrator coordinates 4 specialist AI agents — Safety, Fatigue, Skills, Workforce — each querying live data in parallel</p>
+      </div>
+
+      {/* Architecture diagram */}
+      <div style={{ background:"#ffffff", border:"1px solid rgba(10,49,97,0.09)", borderRadius:10, padding:20, marginBottom:16, boxShadow:"0 1px 4px rgba(0,0,0,0.04)" }}>
+        <div style={{ fontSize:12, fontWeight:700, color:"#7a8fa8", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:12 }}>Agent Architecture</div>
+        <div style={{ position:"relative", height:200, userSelect:"none" }}>
+          {/* Connection lines */}
+          <svg style={{ position:"absolute", inset:0, width:"100%", height:"100%", pointerEvents:"none" }}>
+            {[
+              ["50%","45px","20%","155px"],
+              ["50%","45px","37%","155px"],
+              ["50%","45px","63%","155px"],
+              ["50%","45px","80%","155px"],
+            ].map(([x1,y1,x2,y2],i)=>(
+              <line key={i} x1={x1} y1={y1} x2={x2} y2={y2}
+                stroke={running?"#005695":"#E0E0E0"} strokeWidth={running?1.5:1}
+                strokeDasharray={running?"6 4":"none"}
+                style={{ transition:"stroke 0.3s" }}
+              />
+            ))}
+          </svg>
+          {/* Orchestrator */}
+          <AgentNode agentKey="orchestrator"   x="50%" y={45} />
+          {/* Specialist agents */}
+          <AgentNode agentKey="safety_agent"   x="20%" y={160} />
+          <AgentNode agentKey="fatigue_agent"  x="37%" y={160} />
+          <AgentNode agentKey="skills_agent"   x="63%" y={160} />
+          <AgentNode agentKey="workforce_agent" x="80%" y={160} />
+        </div>
+
+        {/* Message bus live log */}
+        {msgLog.length > 0 && (
+          <div style={{ marginTop:8, background:"#f0f4f9", borderRadius:8, padding:"8px 12px", maxHeight:100, overflowY:"auto" }}>
+            {msgLog.slice(-6).map((m,i)=>{
+              const meta = AGENTS_META[m.agent]||{};
+              return (
+                <div key={i} style={{ display:"flex", gap:6, alignItems:"flex-start", marginBottom:4, fontSize:11 }}>
+                  <span style={{ color:"#7a8fa8", flexShrink:0, fontFamily:"monospace" }}>{m.ts}</span>
+                  <span style={{ flexShrink:0 }}>{meta.emoji}</span>
+                  <span style={{ fontWeight:600, color:meta.color||"#374151", flexShrink:0 }}>{meta.name||m.agent}</span>
+                  <span style={{ color:"#3a5068" }}>{m.msg}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Task input */}
+      <div style={{ background:"#ffffff", border:"1px solid rgba(10,49,97,0.09)", borderRadius:10, padding:20, marginBottom:16, boxShadow:"0 1px 4px rgba(0,0,0,0.04)" }}>
+        <div style={{ fontSize:13, fontWeight:700, color:"#0d1f35", marginBottom:12 }}>Ask the Multi-Agent System</div>
+
+        {/* Preset tasks */}
+        <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:14 }}>
+          {PRESET_TASKS.map((p,i)=>(
+            <button key={i} onClick={()=>{ setTask(p); }}
+              style={{ padding:"5px 12px", fontSize:11, fontWeight:500, background:"#f0f4f9", border:"1px solid #E2E8F0", borderRadius:20, color:"#3a5068", cursor:"pointer", textAlign:"left" }}>
+              {p.slice(0,50)}{p.length>50?"…":""}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ display:"flex", gap:10 }}>
+          <textarea value={task} onChange={e=>setTask(e.target.value)}
+            placeholder="e.g. Give me a full risk assessment across all Nestlé factories…"
+            rows={3}
+            style={{ flex:1, padding:"10px 14px", fontSize:13, background:"#f0f4f9", border:"1px solid #E2E8F0", borderRadius:10, color:"#0d1f35", outline:"none", resize:"none", fontFamily:"inherit" }} />
+          <button onClick={()=>runMAS()} disabled={running||!task.trim()}
+            style={{ padding:"0 24px", fontSize:13, fontWeight:700, background:running||!task.trim()?"#F5F5F5":"linear-gradient(135deg,#1A1A1A,#374151)", border:running?"1px solid #E0E0E0":"none", borderRadius:10, color:running?"#9CA3AF":"#fff", cursor:running||!task.trim()?"not-allowed":"pointer", flexShrink:0, minWidth:120 }}>
+            {running ? (
+              <span style={{ display:"flex", alignItems:"center", gap:6, justifyContent:"center" }}>
+                {[0,1,2].map(i=><span key={i} style={{ width:5,height:5,borderRadius:"50%",background:"#9CA3AF",display:"inline-block",animation:`bounce 1s ease-in-out ${i*0.2}s infinite` }}/>)}
+              </span>
+            ) : "▶ Orchestrate"}
+          </button>
+        </div>
+        {error && <div style={{ marginTop:10, padding:"8px 12px", background:"#FFF1F0", border:"1px solid #FFCCC7", borderRadius:7, fontSize:12, color:"#CF1322" }}>⚠️ {error}</div>}
+      </div>
+
+      {/* Results */}
+      {result && !running && (
+        <>
+          {/* Executive synthesis */}
+          <div style={{ background:"linear-gradient(135deg,#061e3d,#0a3161)", border:"1px solid #2D3748", borderRadius:12, padding:24, marginBottom:16, boxShadow:"0 4px 16px rgba(0,0,0,0.12)" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}>
+              <div style={{ fontSize:20 }}>🎯</div>
+              <div>
+                <div style={{ fontSize:14, fontWeight:700, color:"#FFFFFF" }}>Orchestrator — Executive Synthesis</div>
+                <div style={{ fontSize:11, color:"rgba(255,255,255,0.4)", marginTop:1 }}>
+                  Synthesised from {result.agentResults?.length||0} specialist agents · {result.agentResults?.reduce((s,r)=>s+(r.steps||[]).filter(x=>x.input).length,0)||0} total database tool calls
+                </div>
+              </div>
+            </div>
+            <div style={{ fontSize:13, color:"rgba(255,255,255,0.85)", lineHeight:1.8, whiteSpace:"pre-wrap" }}>
+              {result.synthesis}
+            </div>
+          </div>
+
+          {/* Individual agent reports */}
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14, marginBottom:16 }}>
+            {(result.agentResults||[]).map(agent=>{
+              const meta = AGENTS_META[agent.agentKey] || { name:agent.name, emoji:agent.emoji||"🤖", color:"#3a5068", bg:"#F5F5F5" };
+              const toolCalls = (agent.steps||[]).filter(s=>s.input);
+              return (
+                <div key={agent.agentKey} style={{ background:"#FFFFFF", border:`1px solid ${meta.color}33`, borderRadius:12, overflow:"hidden", boxShadow:"0 1px 4px rgba(0,0,0,0.04)", borderTop:`3px solid ${meta.color}` }}>
+                  {/* Agent header */}
+                  <div style={{ padding:"14px 16px 10px", background:meta.bg, borderBottom:"1px solid rgba(10,49,97,0.07)" }}>
+                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                      <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                        <span style={{ fontSize:20 }}>{meta.emoji}</span>
+                        <div>
+                          <div style={{ fontSize:13, fontWeight:700, color:"#0d1f35" }}>{meta.name}</div>
+                          <div style={{ fontSize:10, color:"#3a5068" }}>{meta.desc}</div>
+                        </div>
+                      </div>
+                      <div style={{ textAlign:"right" }}>
+                        <div style={{ fontSize:11, fontWeight:700, color:meta.color }}>✓ Complete</div>
+                        <div style={{ fontSize:10, color:"#7a8fa8" }}>{toolCalls.length} tool calls</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tool calls used */}
+                  {toolCalls.length > 0 && (
+                    <div style={{ padding:"8px 16px", background:"#FAFAFA", borderBottom:"1px solid rgba(10,49,97,0.07)", display:"flex", gap:5, flexWrap:"wrap" }}>
+                      {toolCalls.map((s,i)=>(
+                        <span key={i} style={{ fontSize:9, fontWeight:600, padding:"2px 7px", borderRadius:4, background:meta.bg, color:meta.color, letterSpacing:"0.03em" }}>
+                          🔧 {s.tool}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Agent findings */}
+                  <div style={{ padding:16 }}>
+                    {agent.error ? (
+                      <div style={{ fontSize:12, color:"#CF1322" }}>⚠️ {agent.error}</div>
+                    ) : (
+                      <div style={{ fontSize:12, color:"#3a5068", lineHeight:1.7, whiteSpace:"pre-wrap", maxHeight:180, overflowY:"auto" }}>
+                        {(agent.thinking||"").slice(0,600)}{(agent.thinking||"").length>600?"…":""}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Message bus log */}
+          {result.bus_messages && result.bus_messages.length > 0 && (
+            <div style={{ background:"#FFFFFF", border:"1px solid rgba(10,49,97,0.09)", borderRadius:12, padding:20, boxShadow:"0 2px 12px rgba(10,49,97,0.06)" }}>
+              <div style={{ fontSize:13, fontWeight:700, color:"#0d1f35", marginBottom:12 }}>📡 Agent Message Bus</div>
+              <div style={{ background:"#0D1117", borderRadius:8, padding:14, fontFamily:"monospace", maxHeight:200, overflowY:"auto" }}>
+                {result.bus_messages.map((m,i)=>{
+                  const meta = AGENTS_META[m.from] || { emoji:"📢", color:"#7a8fa8" };
+                  const col = m.type==="SYNTHESIS"?"#4ADE80":m.type==="PLAN"?"#F59E0B":m.type==="REPORT"?"#60A5FA":meta.color||"#9CA3AF";
+                  return (
+                    <div key={i} style={{ display:"flex", gap:8, marginBottom:6, fontSize:11 }}>
+                      <span style={{ color:"#4A5568", flexShrink:0 }}>{new Date(m.ts).toLocaleTimeString()}</span>
+                      <span style={{ color:col, fontWeight:700, flexShrink:0 }}>[{m.from}→{m.to}]</span>
+                      <span style={{ color:"#94A3B8" }}>{m.type}:</span>
+                      <span style={{ color:"#E2E8F0" }}>{m.payload?.message||m.payload?.synthesis?.slice(0,80)||JSON.stringify(m.payload).slice(0,80)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      <style>{`@keyframes pulse { 0%,100%{box-shadow:0 0 0 0 #005695aa} 50%{box-shadow:0 0 0 8px #00569500} }`}</style>
     </div>
   );
 }
@@ -3258,6 +3896,8 @@ export default function NestleHRDemo() {
   const TABS = [
     { id:"overview",    label:"Overview" },
     { id:"analytics",   label:"📊 Analytics" },
+    { id:"agents",      label:"🕵️ AI Agents" },
+    { id:"mas",         label:"🧠 Multi-Agent" },
     { id:"employees",   label:"👥 Employee Profiles" },
     { id:"safety",      label:"🛡 Safety Hub" },
     { id:"fatigue",     label:"⚡ Fatigue Alerts" },
@@ -3270,13 +3910,15 @@ export default function NestleHRDemo() {
   const APPS = [
     { id:"overview",   icon:"🏠", label:"Workforce Overview",       desc:"Factory workforce status, KPIs and drill-down roster",           color:"#005695" },
     { id:"analytics",  icon:"📊", label:"Analytics & Insights",      desc:"Charts, trends, fatigue distribution and skills gap analysis",   color:"#6D28D9" },
+    { id:"agents",     icon:"🕵️", label:"AI Agents",                   desc:"Autonomous Safety Sentinel, Action Agent and RAG-powered Copilot", color:"#0F766E" },
+    { id:"mas",        icon:"🧠", label:"Multi-Agent System",           desc:"Orchestrator + 4 specialist agents working in parallel on complex tasks", color:"#1A1A2E" },
     { id:"employees",  icon:"👥", label:"Employee Profiles",         desc:"Full employee database with search, filters and AI advisor",      color:"#389E0D" },
     { id:"safety",     icon:"🛡", label:"Safety Intelligence Hub",   desc:"Incident tracking, factory safety scorecard and AI briefing",    color:"#E8312A" },
     { id:"fatigue",    icon:"⚡", label:"Fatigue Risk Intelligence",  desc:"Live fatigue alerts, overtime analysis and intervention plans",   color:"#D46B08" },
     { id:"skills",     icon:"🎓", label:"Skills Intelligence",        desc:"Skills gap analysis, training roadmaps and NCE maturity",        color:"#531DAB" },
     { id:"operations", icon:"🏭", label:"Operations & Scheduling",    desc:"AI shift optimisation, utilisation and throughput analytics",    color:"#005695" },
     { id:"copilot",    icon:"🤖", label:"HR AI Copilot",              desc:"Multi-turn AI assistant for workforce, safety and talent queries", color:"#1D7A8A" },
-    ...(currentUser?.access==="admin" ? [{ id:"users", icon:"⚙", label:"User Management", desc:"Manage platform users, roles and access permissions", color:"#6B7280" }] : []),
+    ...(currentUser?.access==="admin" ? [{ id:"users", icon:"⚙", label:"User Management", desc:"Manage platform users, roles and access permissions", color:"#3a5068" }] : []),
   ];
 
   // shared clickable worker count
@@ -3289,18 +3931,140 @@ export default function NestleHRDemo() {
   );
 
   return (
-    <div style={{ fontFamily:"'Helvetica Neue','Helvetica','Arial',sans-serif", background:"#F5F5F5", minHeight:"100vh", color:"#1A1A1A" }}>
+    <div style={{ fontFamily:"'Sora',sans-serif", background:"#f0f4f9", height:"100vh", display:"flex", overflow:"hidden", color:"#0d1f35" }}>
 
-      {/* HEADER */}
-      <div style={{ background:"#FFFFFF", borderBottom:"1px solid #E8E8E8", padding:"0 32px", position:"sticky", top:0, zIndex:100, boxShadow:"0 2px 8px rgba(0,0,0,0.06)" }}>
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", height:58 }}>
+      {/* ── SIDEBAR ── */}
+      <div style={{ width:248, minWidth:248, background:"#0a3161", display:"flex", flexDirection:"column", height:"100vh", position:"sticky", top:0, overflow:"hidden", flexShrink:0 }}>
+        {/* Sidebar header */}
+        <div style={{ padding:"22px 18px 18px", borderBottom:"1px solid rgba(255,255,255,0.08)" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:11, cursor:"pointer" }} onClick={()=>setTab("home")}>
+            <div style={{ width:38, height:38, borderRadius:9, background:"linear-gradient(135deg,#00b5a8 0%,#009d8e 100%)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, boxShadow:"0 2px 8px rgba(0,181,168,0.3)" }}>
+              <span style={{ color:"#fff", fontWeight:700, fontSize:17, letterSpacing:"-1px" }}>N</span>
+            </div>
+            <div>
+              <div style={{ fontSize:11, fontWeight:300, color:"rgba(255,255,255,0.5)", letterSpacing:"1.8px", textTransform:"uppercase" }}>Nestlé</div>
+              <div style={{ fontSize:17, fontWeight:700, color:"#ffffff", letterSpacing:"-0.3px", lineHeight:1 }}>HR·<span style={{ color:"#00b5a8" }}>EOS</span></div>
+              <div style={{ fontSize:9.5, fontWeight:400, color:"rgba(255,255,255,0.38)", letterSpacing:"0.5px", marginTop:1, textTransform:"uppercase" }}>Enterprise AI OS</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Sidebar nav */}
+        <div style={{ flex:1, padding:"14px 10px", display:"flex", flexDirection:"column", gap:1, overflowY:"auto" }}>
+          {/* App launcher button */}
+          <div style={{ position:"relative", marginBottom:8 }}>
+            <button onClick={()=>setShowAppLauncher(s=>!s)}
+              style={{ width:"100%", display:"flex", alignItems:"center", gap:10, padding:"9px 11px", borderRadius:7, cursor:"pointer", fontSize:13, fontWeight:400, color:"rgba(255,255,255,0.65)", background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)", transition:"all 0.15s" }}
+              onMouseOver={e=>e.currentTarget.style.background="rgba(255,255,255,0.1)"}
+              onMouseOut={e=>e.currentTarget.style.background="rgba(255,255,255,0.06)"}>
+              <svg width="16" height="16" viewBox="0 0 18 18">
+                {[[1,1],[7,1],[13,1],[1,7],[7,7],[13,7],[1,13],[7,13],[13,13]].map(([x,y],i)=>(<rect key={i} x={x} y={y} width="4" height="4" rx="1" fill="rgba(255,255,255,0.6)" />))}
+              </svg>
+              All Applications
+              <svg style={{ marginLeft:"auto" }} width="12" height="12" viewBox="0 0 12 12"><path d="M3 4.5L6 7.5L9 4.5" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" fill="none" strokeLinecap="round"/></svg>
+            </button>
+            {showAppLauncher && (
+              <>
+                <div style={{ position:"fixed",inset:0,zIndex:498 }} onClick={()=>setShowAppLauncher(false)} />
+                <div style={{ position:"absolute",left:0,top:46,width:348,background:"#ffffff",border:"1px solid rgba(10,49,97,0.12)",borderRadius:10,boxShadow:"0 10px 40px rgba(10,49,97,0.15)",zIndex:499,overflow:"hidden",animation:"fadeIn 0.15s ease" }}>
+                  <div style={{ padding:"12px 16px 10px",borderBottom:"1px solid rgba(10,49,97,0.08)" }}>
+                    <div style={{ fontSize:13,fontWeight:600,color:"#0d1f35" }}>Applications</div>
+                    <div style={{ fontSize:11,color:"#7a8fa8",marginTop:1 }}>Nestlé EOS Modules</div>
+                  </div>
+                  <div style={{ padding:"8px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:3 }}>
+                    {APPS.map(app=>(
+                      <button key={app.id} onClick={()=>{ setTab(app.id); setShowAppLauncher(false); }}
+                        style={{ display:"flex",alignItems:"flex-start",gap:10,padding:"10px 12px",borderRadius:8,background:tab===app.id?"#e8f1fb":"transparent",border:`1px solid ${tab===app.id?"#a8c8f0":"transparent"}`,cursor:"pointer",textAlign:"left",transition:"all 0.1s" }}
+                        onMouseOver={e=>{ if(tab!==app.id){ e.currentTarget.style.background="#f7fafd"; e.currentTarget.style.border="1px solid rgba(10,49,97,0.09)"; } }}
+                        onMouseOut={e=>{ if(tab!==app.id){ e.currentTarget.style.background="transparent"; e.currentTarget.style.border="1px solid transparent"; } }}>
+                        <div style={{ width:32,height:32,borderRadius:8,background:app.color+"18",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0 }}>{app.icon}</div>
+                        <div>
+                          <div style={{ fontSize:12,fontWeight:500,color:"#0d1f35",marginBottom:1 }}>{app.label}</div>
+                          <div style={{ fontSize:10,color:"#7a8fa8",lineHeight:1.4 }}>{app.desc.slice(0,45)}{app.desc.length>45?"…":""}</div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Nav groups */}
+          {[
+            { label:"Main", items:[
+              { id:"home",      icon:"🏠", label:"Home" },
+              { id:"overview",  icon:"📋", label:"Workforce Overview" },
+              { id:"analytics", icon:"📊", label:"Analytics" },
+            ]},
+            { label:"Workforce", items:[
+              { id:"employees", icon:"👥", label:"Employee Profiles" },
+              { id:"fatigue",   icon:"⚡", label:"Fatigue Alerts" },
+              { id:"skills",    icon:"🎓", label:"Skills Intelligence" },
+            ]},
+            { label:"Safety & Ops", items:[
+              { id:"safety",     icon:"🛡", label:"Safety Hub" },
+              { id:"operations", icon:"🏭", label:"Operations" },
+            ]},
+            { label:"AI System", items:[
+              { id:"copilot", icon:"🤖", label:"HR Copilot" },
+              { id:"agents",  icon:"🕵️", label:"AI Agents" },
+              { id:"mas",     icon:"🧠", label:"Multi-Agent" },
+            ]},
+            ...( currentUser?.access==="admin" ? [{ label:"Admin", items:[{ id:"users", icon:"⚙", label:"User Management" }] }] : [] ),
+          ].map(group=>(
+            <div key={group.label}>
+              <div style={{ fontSize:"9.5px",color:"rgba(255,255,255,0.3)",textTransform:"uppercase",letterSpacing:"1px",padding:"10px 10px 5px",fontWeight:500 }}>{group.label}</div>
+              {group.items.map(item=>{
+                const isActive = tab===item.id;
+                const badge = item.id==="fatigue" && dbStats?.pendingAlerts ? dbStats.pendingAlerts : item.id==="safety" && dbStats?.openIncidents ? dbStats.openIncidents : null;
+                return (
+                  <button key={item.id} onClick={()=>setTab(item.id)}
+                    style={{ width:"100%", display:"flex", alignItems:"center", gap:10, padding:"9px 11px", borderRadius:7, cursor:"pointer", fontSize:13, fontWeight:isActive?500:400, color:isActive?"#fff":"rgba(255,255,255,0.65)", background:isActive?"rgba(255,255,255,0.13)":"transparent", border:"none", transition:"all 0.15s", textAlign:"left" }}
+                    onMouseOver={e=>{ if(!isActive) e.currentTarget.style.background="rgba(255,255,255,0.07)"; e.currentTarget.style.color="#fff"; }}
+                    onMouseOut={e=>{ if(!isActive){ e.currentTarget.style.background="transparent"; e.currentTarget.style.color="rgba(255,255,255,0.65)"; } }}>
+                    <span style={{ fontSize:14, flexShrink:0 }}>{item.icon}</span>
+                    <span style={{ flex:1 }}>{item.label}</span>
+                    {badge && <span style={{ background:item.id==="safety"?"#c0392b":"#b86a00", color:"#fff", fontSize:9.5, fontWeight:600, padding:"2px 7px", borderRadius:20, fontFamily:"'JetBrains Mono',monospace" }}>{badge}</span>}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+
+        {/* Sidebar footer — user */}
+        <div style={{ padding:"14px 18px", borderTop:"1px solid rgba(255,255,255,0.08)" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+            <div style={{ width:34, height:34, borderRadius:"50%", background:"linear-gradient(135deg,#1e6dc5 0%,#164e8a 100%)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:11.5, fontWeight:600, color:"#fff", flexShrink:0 }}>{currentUser?.avatar}</div>
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={{ fontSize:13, fontWeight:500, color:"#fff", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{currentUser?.name}</div>
+              <div style={{ fontSize:10, color:"rgba(255,255,255,0.4)", marginTop:1 }}>{currentUser?.role}</div>
+            </div>
+            <button onClick={async()=>{ if(window.__EOS_TOKEN__){ await fetch(API_BASE+"/auth/logout",{method:"POST",headers:authH()}).catch(()=>{}); localStorage.removeItem("eos_token"); } setCurrentUser(null); }}
+              style={{ background:"none", border:"none", cursor:"pointer", color:"rgba(255,255,255,0.35)", padding:4, transition:"color 0.15s" }}
+              onMouseOver={e=>e.currentTarget.style.color="rgba(255,255,255,0.8)"}
+              onMouseOut={e=>e.currentTarget.style.color="rgba(255,255,255,0.35)"}
+              title="Sign Out">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── MAIN CONTENT ── */}
+      <div style={{ flex:1, display:"flex", flexDirection:"column", minWidth:0, overflow:"hidden" }}>
+
+      {/* TOPBAR */}
+      <div style={{ background:"#FFFFFF", borderBottom:"1px solid rgba(10,49,97,0.09)", padding:"0 28px", height:58, display:"flex", alignItems:"center", justifyContent:"space-between", flexShrink:0, boxShadow:"0 2px 8px rgba(10,49,97,0.04)" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
           <div style={{ display:"flex", alignItems:"center", gap:6 }}>
             {/* ── 9-dot App Launcher ── */}
             <div style={{ position:"relative" }}>
               <button onClick={()=>setShowAppLauncher(s=>!s)}
                 style={{ width:38,height:38,borderRadius:8,background:showAppLauncher?"#F0F0F0":"transparent",border:"none",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",transition:"background 0.15s" }}
                 title="Open App Launcher"
-                onMouseOver={e=>e.currentTarget.style.background="#F0F0F0"}
+                onMouseOver={e=>e.currentTarget.style.background="#f0f4f9"}
                 onMouseOut={e=>e.currentTarget.style.background=showAppLauncher?"#F0F0F0":"transparent"}>
                 <svg width="18" height="18" viewBox="0 0 18 18">
                   {[[1,1],[7,1],[13,1],[1,7],[7,7],[13,7],[1,13],[7,13],[13,13]].map(([x,y],i)=>(
@@ -3312,10 +4076,10 @@ export default function NestleHRDemo() {
                 <>
                   <div style={{ position:"fixed",inset:0,zIndex:498 }} onClick={()=>setShowAppLauncher(false)} />
                   <div style={{ position:"absolute",left:0,top:46,width:348,background:"#FFFFFF",border:"1px solid #E0E0E0",borderRadius:14,boxShadow:"0 10px 48px rgba(0,0,0,0.15)",zIndex:499,overflow:"hidden",animation:"fadeIn 0.15s ease" }}>
-                    <div style={{ padding:"14px 18px 12px",borderBottom:"1px solid #F0F0F0",display:"flex",justifyContent:"space-between",alignItems:"center" }}>
+                    <div style={{ padding:"14px 18px 12px",borderBottom:"1px solid rgba(10,49,97,0.07)",display:"flex",justifyContent:"space-between",alignItems:"center" }}>
                       <div>
-                        <div style={{ fontSize:13,fontWeight:700,color:"#1A1A1A" }}>Nestlé EOS Applications</div>
-                        <div style={{ fontSize:11,color:"#9CA3AF",marginTop:1 }}>Click to open any module</div>
+                        <div style={{ fontSize:13,fontWeight:700,color:"#0d1f35" }}>Nestlé EOS Applications</div>
+                        <div style={{ fontSize:11,color:"#7a8fa8",marginTop:1 }}>Click to open any module</div>
                       </div>
                       <button onClick={()=>{ setTab("home"); setShowAppLauncher(false); }}
                         style={{ fontSize:11,fontWeight:600,color:"#005695",background:"#E6F4FF",border:"none",borderRadius:6,padding:"4px 10px",cursor:"pointer" }}>Home</button>
@@ -3324,12 +4088,12 @@ export default function NestleHRDemo() {
                       {APPS.map(app=>(
                         <button key={app.id} onClick={()=>{ setTab(app.id); setShowAppLauncher(false); }}
                           style={{ display:"flex",alignItems:"flex-start",gap:10,padding:"10px 12px",borderRadius:8,background:tab===app.id?"#EBF4FF":"transparent",border:`1px solid ${tab===app.id?"#91CAFF":"transparent"}`,cursor:"pointer",textAlign:"left",transition:"all 0.1s" }}
-                          onMouseOver={e=>{ if(tab!==app.id) e.currentTarget.style.background="#F5F7FA"; e.currentTarget.style.border="1px solid #E8E8E8"; }}
+                          onMouseOver={e=>{ if(tab!==app.id) e.currentTarget.style.background="#f7fafd"; e.currentTarget.style.border="1px solid #E8E8E8"; }}
                           onMouseOut={e=>{ if(tab!==app.id){ e.currentTarget.style.background="transparent"; e.currentTarget.style.border="1px solid transparent"; } }}>
                           <div style={{ width:36,height:36,borderRadius:8,background:app.color+"18",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0,border:`1px solid ${app.color}22` }}>{app.icon}</div>
                           <div style={{ flex:1,minWidth:0 }}>
-                            <div style={{ fontSize:12,fontWeight:600,color:"#1A1A1A",marginBottom:2 }}>{app.label}</div>
-                            <div style={{ fontSize:10,color:"#9CA3AF",lineHeight:1.4 }}>{app.desc.slice(0,55)}{app.desc.length>55?"…":""}</div>
+                            <div style={{ fontSize:12,fontWeight:600,color:"#0d1f35",marginBottom:2 }}>{app.label}</div>
+                            <div style={{ fontSize:10,color:"#7a8fa8",lineHeight:1.4 }}>{app.desc.slice(0,55)}{app.desc.length>55?"…":""}</div>
                           </div>
                         </button>
                       ))}
@@ -3351,13 +4115,21 @@ export default function NestleHRDemo() {
               </div>
             </div>
           </div>
-          <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-            <Badge label="LIVE AI" color="green" />
-            <Badge label="270K EMPLOYEES" color="yellow" />
-            <Badge label="188 COUNTRIES" color="blue" />
+          <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+            <div>
+              <div style={{ fontSize:15, fontWeight:600, color:"#0d1f35" }}>
+                {(TABS.find(t=>t.id===tab)?.label||"Home").replace(/^[^a-zA-Z0-9 ]+ */,"")}
+              </div>
+              <div style={{ fontSize:11, color:"#7a8fa8" }}>Nestlé EOS / {tab.charAt(0).toUpperCase()+tab.slice(1)}</div>
+            </div>
+            <div style={{ display:"flex", alignItems:"center", gap:5, background:"#e0f7f5", color:"#007d74", fontSize:11, fontWeight:500, padding:"4px 10px", borderRadius:20, border:"1px solid rgba(0,181,168,0.25)" }}>
+              <div style={{ width:6, height:6, borderRadius:"50%", background:"#00b5a8", flexShrink:0 }} />
+              Live AI
+            </div>
+            <div style={{ fontSize:12, color:"#7a8fa8" }}>270K Employees · 188 Countries</div>
             <NotificationBell user={currentUser} />
             <div style={{ width:1, height:24, background:C.border, margin:"0 4px" }} />
-            <div style={{ display:"flex", alignItems:"center", gap:8, padding:"4px 10px", background:"#F8F9FA", border:`1px solid ${C.border}`, borderRadius:8 }}>
+            <div style={{ display:"flex", alignItems:"center", gap:8, padding:"4px 10px", background:"#f0f4f9", border:`1px solid ${C.border}`, borderRadius:8 }}>
               <div style={{ width:26, height:26, borderRadius:"50%", background:C.accent, display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:800, color:"#fff" }}>{currentUser.avatar}</div>
               <div>
                 <div style={{ fontSize:11, fontWeight:700 }}>{currentUser.name}</div>
@@ -3369,22 +4141,25 @@ export default function NestleHRDemo() {
               localStorage.removeItem("eos_token");
               setCurrentUser(null);
             }}
-              style={{ padding:"5px 12px", fontSize:11, fontWeight:700, background:"transparent", border:"1px solid #D0D0D0", borderRadius:7, color:"#6B7280", cursor:"pointer" }}>
+              style={{ padding:"5px 12px", fontSize:11, fontWeight:700, background:"transparent", border:"1px solid #D0D0D0", borderRadius:7, color:"#3a5068", cursor:"pointer" }}>
               Sign Out
             </button>
           </div>
         </div>
-        <div style={{ display:"flex", gap:0, borderTop:"1px solid #F0F0F0" }}>
-          {TABS.map(t=>(
-            <button key={t.id} onClick={()=>setTab(t.id)} style={{ padding:"10px 18px", fontSize:13, fontWeight:tab===t.id?700:400, background:"transparent", border:"none", cursor:"pointer", color:tab===t.id?C.accent:C.muted, borderBottom:`2px solid ${tab===t.id?C.accent:"transparent"}`, transition:"all 0.15s", letterSpacing:"0", whiteSpace:"nowrap" }}>{t.label}</button>
-          ))}
-        </div>
+
       </div>
 
-      <div style={{ padding:"28px 32px", maxWidth:1280, margin:"0 auto" }}>
+      <div style={{ flex:1, overflowY:"auto" }}>
+      <div style={{ padding:"28px 30px", maxWidth:1280, margin:"0 auto" }}>
 
         {/* ══ HOME ══ */}
         {tab==="home" && <HomePage onNavigate={setTab} currentUser={currentUser} dbStats={dbStats} dbFactories={dbFactories} />}
+
+        {/* ══ MULTI-AGENT SYSTEM ══ */}
+        {tab==="mas" && <MultiAgentTab />}
+
+        {/* ══ AI AGENTS ══ */}
+        {tab==="agents" && <AIAgentsTab />}
 
         {/* ══ ANALYTICS ══ */}
         {tab==="analytics" && <AnalyticsTab />}
@@ -3392,8 +4167,8 @@ export default function NestleHRDemo() {
         {/* ══ OVERVIEW ══ */}
         {tab==="overview" && (
           <div>
-            <h2 style={{ fontSize:20, fontWeight:700, margin:"0 0 4px", color:"#1A1A1A" }}>Workforce Intelligence Dashboard</h2>
-            <p style={{ color:"#6B7280", fontSize:13, margin:"0 0 22px", color:"#6B7280" }}>
+            <h2 style={{ fontSize:20, fontWeight:700, margin:"0 0 4px", color:"#0d1f35" }}>Workforce Intelligence Dashboard</h2>
+            <p style={{ color:"#7a8fa8", fontSize:13, margin:"0 0 22px", color:"#3a5068" }}>
               Click any <span style={{ color:C.blue, fontWeight:700, textDecoration:"underline dotted", textUnderlineOffset:2 }}>worker count</span> to drill into the full employee roster
             </p>
 
@@ -3404,24 +4179,24 @@ export default function NestleHRDemo() {
                 { label:"Open Safety Incidents", value:dbStats.openIncidents||"—", sub:"Requires attention", accent:C.accent },
                 { label:"Actions Applied (AI)", value:dbStats.actionsApplied||"—", sub:"Via HR Copilot", accent:C.purple },
               ].map(k=>(
-                <div key={k.label} style={{ background:"#FFFFFF", border:"1px solid #EDEDED", borderRadius:12, boxShadow:"0 1px 4px rgba(0,0,0,0.06)", padding:"18px 22px", borderLeft:`3px solid ${k.accent}` }}>
-                  <div style={{ color:"#9CA3AF", fontSize:10, fontWeight:600, letterSpacing:"0.08em", textTransform:"uppercase", marginBottom:5 }}>{k.label}</div>
-                  <div style={{ color:"#1A1A1A", fontSize:26, fontWeight:800, lineHeight:1 }}>{k.value}</div>
-                  {k.sub&&<div style={{ color:"#6B7280", fontSize:11, marginTop:4 }}>{k.sub}</div>}
+                <div key={k.label} style={{ background:"#FFFFFF", border:"1px solid rgba(10,49,97,0.09)", borderRadius:12, boxShadow:"0 2px 12px rgba(10,49,97,0.06)", padding:"18px 22px", borderLeft:`3px solid ${k.accent}` }}>
+                  <div style={{ color:"#7a8fa8", fontSize:10, fontWeight:600, letterSpacing:"0.08em", textTransform:"uppercase", marginBottom:5 }}>{k.label}</div>
+                  <div style={{ color:"#0d1f35", fontSize:26, fontWeight:800, lineHeight:1 }}>{k.value}</div>
+                  {k.sub&&<div style={{ color:"#7a8fa8", fontSize:11, marginTop:4 }}>{k.sub}</div>}
                 </div>
               ))}
             </div>
 
-            <div style={{ background:"#FFFFFF", border:"1px solid #EDEDED", borderRadius:12, boxShadow:"0 1px 4px rgba(0,0,0,0.06)", overflow:"hidden" }}>
+            <div style={{ background:"#FFFFFF", border:"1px solid rgba(10,49,97,0.09)", borderRadius:12, boxShadow:"0 2px 12px rgba(10,49,97,0.06)", overflow:"hidden" }}>
               <div style={{ padding:"13px 20px", borderBottom:`1px solid ${C.border}`, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                 <span style={{ fontWeight:700, fontSize:14 }}>Factory Workforce Status</span>
-                <span style={{ color:"#6B7280", fontSize:12 }}>Click worker count → employee roster &nbsp;·&nbsp; 6 of 350 factories shown</span>
+                <span style={{ color:"#7a8fa8", fontSize:12 }}>Click worker count → employee roster &nbsp;·&nbsp; 6 of 350 factories shown</span>
               </div>
               <table style={{ width:"100%", borderCollapse:"collapse" }}>
                 <thead>
-                  <tr style={{ background:"#F8F9FA" }}>
+                  <tr style={{ background:"#f0f4f9" }}>
                     {["Factory","Zone","Workforce ↗","Utilization","Risk","Actions"].map(h=>(
-                      <th key={h} style={{ padding:"10px 20px", textAlign:"left", fontSize:10, fontWeight:700, color:"#9CA3AF", letterSpacing:"0.06em", textTransform:"uppercase", fontWeight:600 }}>{h}</th>
+                      <th key={h} style={{ padding:"10px 20px", textAlign:"left", fontSize:10, fontWeight:700, color:"#7a8fa8", letterSpacing:"0.06em", textTransform:"uppercase", fontWeight:600 }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -3430,12 +4205,12 @@ export default function NestleHRDemo() {
                     <tr key={f.id} style={{ borderTop:`1px solid ${C.border}` }}>
                       <td style={{ padding:"13px 20px" }}>
                         <div style={{ fontWeight:600, fontSize:13 }}>{f.name}</div>
-                        <div style={{ color:"#6B7280", fontSize:11 }}>{f.id} · {f.country}</div>
+                        <div style={{ color:"#7a8fa8", fontSize:11 }}>{f.id} · {f.country}</div>
                       </td>
-                      <td style={{ padding:"13px 20px", color:"#6B7280", fontSize:12 }}>{f.zone}</td>
+                      <td style={{ padding:"13px 20px", color:"#7a8fa8", fontSize:12 }}>{f.zone}</td>
                       <td style={{ padding:"13px 20px" }}>
                         <WorkerCount factory={f} style={{ fontSize:18 }} />
-                        <span style={{ color:"#6B7280", fontSize:11 }}> workers</span>
+                        <span style={{ color:"#7a8fa8", fontSize:11 }}> workers</span>
                       </td>
                       <td style={{ padding:"13px 20px" }}>
                         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
@@ -3450,7 +4225,7 @@ export default function NestleHRDemo() {
                       </td>
                       <td style={{ padding:"13px 20px" }}>
                         <div style={{ display:"flex", gap:6 }}>
-                          <button onClick={()=>openRoster(f)} style={{ background:"#F8F9FA", border:`1px solid ${C.border}`, borderRadius:6, padding:"5px 12px", fontSize:11, fontWeight:700, color:C.blue, cursor:"pointer" }}>👥 Roster</button>
+                          <button onClick={()=>openRoster(f)} style={{ background:"#f0f4f9", border:`1px solid ${C.border}`, borderRadius:6, padding:"5px 12px", fontSize:11, fontWeight:700, color:C.blue, cursor:"pointer" }}>👥 Roster</button>
                           <button onClick={()=>{ setSelectedFactory(f); setTab("scheduling"); }} style={{ background:C.accent, border:"none", borderRadius:6, padding:"5px 12px", fontSize:11, fontWeight:700, color:"#fff", cursor:"pointer" }}>⚡ Schedule</button>
                         </div>
                       </td>
@@ -3465,8 +4240,8 @@ export default function NestleHRDemo() {
         {/* ══ SCHEDULING ══ */}
         {tab==="scheduling" && (
           <div>
-            <h2 style={{ fontSize:20, fontWeight:700, margin:"0 0 4px", color:"#1A1A1A" }}>AI Workforce Scheduling</h2>
-            <p style={{ color:"#6B7280", fontSize:13, margin:"0 0 22px", color:"#6B7280" }}>Automated shift optimisation · fatigue management · local labour law compliance</p>
+            <h2 style={{ fontSize:20, fontWeight:700, margin:"0 0 4px", color:"#0d1f35" }}>AI Workforce Scheduling</h2>
+            <p style={{ color:"#7a8fa8", fontSize:13, margin:"0 0 22px", color:"#3a5068" }}>Automated shift optimisation · fatigue management · local labour law compliance</p>
 
             <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:18 }}>
               {FACTORIES.map(f=>(
@@ -3477,31 +4252,31 @@ export default function NestleHRDemo() {
               ))}
             </div>
 
-            <div style={{ background:"#FFFFFF", border:"1px solid #EDEDED", borderRadius:12, boxShadow:"0 1px 4px rgba(0,0,0,0.06)", padding:22, marginBottom:18 }}>
+            <div style={{ background:"#FFFFFF", border:"1px solid rgba(10,49,97,0.09)", borderRadius:12, boxShadow:"0 2px 12px rgba(10,49,97,0.06)", padding:22, marginBottom:18 }}>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:18 }}>
                 <div>
                   <div style={{ fontSize:18, fontWeight:800 }}>{selectedFactory.name}</div>
-                  <div style={{ color:"#6B7280", fontSize:13 }}>{selectedFactory.country} · {selectedFactory.zone} · {selectedFactory.id}</div>
+                  <div style={{ color:"#7a8fa8", fontSize:13 }}>{selectedFactory.country} · {selectedFactory.zone} · {selectedFactory.id}</div>
                 </div>
                 <Badge label={selectedFactory.risk.toUpperCase()+" RISK"} color={selectedFactory.risk==="high"?"red":selectedFactory.risk==="medium"?"yellow":"green"} />
               </div>
 
               <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:12, marginBottom:18 }}>
                 {/* Workforce — CLICKABLE */}
-                <div style={{ background:"#F8F9FA", border:`1px solid ${C.border}`, borderRadius:10, padding:"14px 18px", borderLeft:`3px solid ${C.blue}` }}>
-                  <div style={{ color:"#9CA3AF", fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:4 }}>Workforce</div>
+                <div style={{ background:"#f0f4f9", border:`1px solid ${C.border}`, borderRadius:10, padding:"14px 18px", borderLeft:`3px solid ${C.blue}` }}>
+                  <div style={{ color:"#7a8fa8", fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:4 }}>Workforce</div>
                   <WorkerCount factory={selectedFactory} style={{ fontSize:30 }} />
-                  <div style={{ color:"#6B7280", fontSize:11, marginTop:3 }}>Click to view full roster ↗</div>
+                  <div style={{ color:"#7a8fa8", fontSize:11, marginTop:3 }}>Click to view full roster ↗</div>
                 </div>
-                <div style={{ background:"#F8F9FA", border:`1px solid ${C.border}`, borderRadius:10, padding:"14px 18px", borderLeft:`3px solid ${selectedFactory.utilization>90?C.accent:C.green}` }}>
-                  <div style={{ color:"#9CA3AF", fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:4 }}>Utilization</div>
+                <div style={{ background:"#f0f4f9", border:`1px solid ${C.border}`, borderRadius:10, padding:"14px 18px", borderLeft:`3px solid ${selectedFactory.utilization>90?C.accent:C.green}` }}>
+                  <div style={{ color:"#7a8fa8", fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:4 }}>Utilization</div>
                   <div style={{ fontSize:30, fontWeight:800, color:selectedFactory.utilization>90?C.accent:C.text }}>{selectedFactory.utilization}%</div>
-                  <div style={{ color:"#6B7280", fontSize:11, marginTop:3 }}>{selectedFactory.utilization>90?"⚠ Overstretched":"Optimal range"}</div>
+                  <div style={{ color:"#7a8fa8", fontSize:11, marginTop:3 }}>{selectedFactory.utilization>90?"⚠ Overstretched":"Optimal range"}</div>
                 </div>
-                <div style={{ background:"#F8F9FA", border:`1px solid ${C.border}`, borderRadius:10, padding:"14px 18px", borderLeft:`3px solid ${C.gold}` }}>
-                  <div style={{ color:"#9CA3AF", fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:4 }}>Zone</div>
+                <div style={{ background:"#f0f4f9", border:`1px solid ${C.border}`, borderRadius:10, padding:"14px 18px", borderLeft:`3px solid ${C.gold}` }}>
+                  <div style={{ color:"#7a8fa8", fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:4 }}>Zone</div>
                   <div style={{ fontSize:30, fontWeight:800 }}>{selectedFactory.zone}</div>
-                  <div style={{ color:"#6B7280", fontSize:11, marginTop:3 }}>Regional cluster</div>
+                  <div style={{ color:"#7a8fa8", fontSize:11, marginTop:3 }}>Regional cluster</div>
                 </div>
               </div>
 
@@ -3511,29 +4286,29 @@ export default function NestleHRDemo() {
                   {scheduleLoading?<><span style={{ display:"inline-block",width:16,height:16,border:"2px solid #fff",borderTopColor:"transparent",borderRadius:"50%",animation:"spin 0.8s linear infinite" }} />Generating…</>:"⚡ Generate AI Schedule"}
                 </button>
                 <button onClick={()=>openRoster(selectedFactory)}
-                  style={{ background:"#F8F9FA", border:`1px solid ${C.blue}`, borderRadius:8, padding:"11px 20px", fontSize:13, fontWeight:700, color:C.blue, cursor:"pointer" }}>
+                  style={{ background:"#f0f4f9", border:`1px solid ${C.blue}`, borderRadius:8, padding:"11px 20px", fontSize:13, fontWeight:700, color:C.blue, cursor:"pointer" }}>
                   👥 Full Roster ({selectedFactory.workers.toLocaleString()})
                 </button>
               </div>
             </div>
 
             {scheduleResult && (
-              <div style={{ background:"#FFFFFF", border:"1px solid #EDEDED", borderRadius:12, boxShadow:"0 1px 4px rgba(0,0,0,0.06)", padding:22, animation:"fadeIn 0.4s ease" }}>
+              <div style={{ background:"#FFFFFF", border:"1px solid rgba(10,49,97,0.09)", borderRadius:12, boxShadow:"0 2px 12px rgba(10,49,97,0.06)", padding:22, animation:"fadeIn 0.4s ease" }}>
                 <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
                   <div style={{ fontWeight:800, fontSize:16 }}>AI Schedule · {selectedFactory.name}</div>
                   <Badge label={`+${scheduleResult.efficiency_gain} EFFICIENCY`} color="green" />
                 </div>
-                <p style={{ color:"#6B7280", fontSize:13, marginBottom:14, lineHeight:1.6 }}>{scheduleResult.summary}</p>
+                <p style={{ color:"#7a8fa8", fontSize:13, marginBottom:14, lineHeight:1.6 }}>{scheduleResult.summary}</p>
                 {scheduleResult.shifts?.length>0 && (
                   <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))", gap:10, marginBottom:14 }}>
                     {scheduleResult.shifts.map((s,i)=>(
-                      <div key={i} style={{ background:"#F8F9FA", border:`1px solid ${C.border}`, borderRadius:10, padding:15 }}>
+                      <div key={i} style={{ background:"#f0f4f9", border:`1px solid ${C.border}`, borderRadius:10, padding:15 }}>
                         <div style={{ fontWeight:700, color:C.accent, marginBottom:4, fontSize:13 }}>{s.shift}</div>
                         <div style={{ fontWeight:600, marginBottom:6, fontSize:12 }}>{s.role}</div>
                         {/* worker count in schedule card also clickable */}
                         <WorkerCount factory={selectedFactory} style={{ fontSize:22 }} />
-                        <span style={{ color:"#6B7280", fontSize:12 }}> workers</span>
-                        {s.note&&<div style={{ color:"#6B7280", fontSize:11, marginTop:6 }}>{s.note}</div>}
+                        <span style={{ color:"#7a8fa8", fontSize:12 }}> workers</span>
+                        {s.note&&<div style={{ color:"#7a8fa8", fontSize:11, marginTop:6 }}>{s.note}</div>}
                       </div>
                     ))}
                   </div>
@@ -3568,15 +4343,15 @@ export default function NestleHRDemo() {
         {/* ══ HR COPILOT ══ */}
         {tab==="copilot" && (
           <div>
-            <h2 style={{ fontSize:20, fontWeight:700, margin:"0 0 4px", color:"#1A1A1A" }}>HR AI Copilot</h2>
-            <p style={{ color:"#6B7280", fontSize:13, margin:"0 0 18px", color:"#6B7280" }}>Ask anything about workforce, scheduling, safety, or talent across 350+ factories</p>
+            <h2 style={{ fontSize:20, fontWeight:700, margin:"0 0 4px", color:"#0d1f35" }}>HR AI Copilot</h2>
+            <p style={{ color:"#7a8fa8", fontSize:13, margin:"0 0 18px", color:"#3a5068" }}>Ask anything about workforce, scheduling, safety, or talent across 350+ factories</p>
             <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:18 }}>
               {["Which factories are lagging on NCE maturity?","Fatigue risk report for Pune Dairy plant","Which zones need FSSC 22000 upskilling?","How do we reskill Maggi line operators for AI-assisted production?","Benchmark Nespresso workforce vs KitKat on safety compliance"].map((p,i)=>(
-                <button key={i} onClick={()=>setChatInput(p)} style={{ padding:"7px 13px", fontSize:12, fontWeight:600, cursor:"pointer", background:"#F8F9FA", border:`1px solid ${C.border}`, borderRadius:8, color:C.text }}>{p}</button>
+                <button key={i} onClick={()=>setChatInput(p)} style={{ padding:"7px 13px", fontSize:12, fontWeight:600, cursor:"pointer", background:"#f0f4f9", border:`1px solid ${C.border}`, borderRadius:8, color:C.text }}>{p}</button>
               ))}
             </div>
-            <div style={{ background:"#FFFFFF", border:"1px solid #EDEDED", borderRadius:12, boxShadow:"0 1px 4px rgba(0,0,0,0.06)", height:400, overflowY:"auto", padding:18, marginBottom:14, display:"flex", flexDirection:"column", gap:14 }}>
-              {ai.messages.length===0&&<div style={{ color:"#6B7280", fontSize:13, textAlign:"center", margin:"auto" }}><div style={{ fontSize:38, marginBottom:10 }}>🤖</div><div style={{ fontWeight:700, color:C.text, marginBottom:4 }}>Nestlé HR Copilot</div>Ask anything about any factory or employee population.</div>}
+            <div style={{ background:"#FFFFFF", border:"1px solid rgba(10,49,97,0.09)", borderRadius:12, boxShadow:"0 2px 12px rgba(10,49,97,0.06)", height:400, overflowY:"auto", padding:18, marginBottom:14, display:"flex", flexDirection:"column", gap:14 }}>
+              {ai.messages.length===0&&<div style={{ color:"#7a8fa8", fontSize:13, textAlign:"center", margin:"auto" }}><div style={{ fontSize:38, marginBottom:10 }}>🤖</div><div style={{ fontWeight:700, color:C.text, marginBottom:4 }}>Nestlé HR Copilot</div>Ask anything about any factory or employee population.</div>}
               {ai.messages.map((m,i)=>(
                 <div key={i} style={{ display:"flex", justifyContent:m.role==="user"?"flex-end":"flex-start" }}>
                   <div style={{ maxWidth:"75%", padding:"11px 15px", borderRadius:m.role==="user"?"12px 12px 2px 12px":"12px 12px 12px 2px", background:m.role==="user"?C.accent:"#F0F4F8", fontSize:13, lineHeight:1.7, whiteSpace:"pre-wrap" }}>
@@ -3585,13 +4360,13 @@ export default function NestleHRDemo() {
                   </div>
                 </div>
               ))}
-              {ai.loading&&<div style={{ display:"flex" }}><div style={{ background:"#F8F9FA", border:`1px solid ${C.border}`, borderRadius:"12px 12px 12px 2px", padding:"11px 15px", color:"#6B7280", fontSize:13 }}>Thinking…</div></div>}
+              {ai.loading&&<div style={{ display:"flex" }}><div style={{ background:"#f0f4f9", border:`1px solid ${C.border}`, borderRadius:"12px 12px 12px 2px", padding:"11px 15px", color:"#7a8fa8", fontSize:13 }}>Thinking…</div></div>}
               <div ref={chatEndRef} />
             </div>
             <div style={{ display:"flex", gap:10 }}>
-              <input value={chatInput} onChange={e=>setChatInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleSendChat()} placeholder="Ask about any factory, workforce issue, or safety concern…" style={{ flex:1, padding:"11px 15px", fontSize:13, background:"#FFFFFF", border:"1px solid #E2E8F0", borderRadius:8, color:"#374151", outline:"none" }} />
+              <input value={chatInput} onChange={e=>setChatInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleSendChat()} placeholder="Ask about any factory, workforce issue, or safety concern…" style={{ flex:1, padding:"11px 15px", fontSize:13, background:"#FFFFFF", border:"1px solid #E2E8F0", borderRadius:8, color:"#3a5068", outline:"none" }} />
               <button onClick={handleSendChat} disabled={ai.loading||!chatInput.trim()} style={{ padding:"11px 22px", fontSize:14, fontWeight:700, background:ai.loading||!chatInput.trim()?C.surfaceAlt:C.accent, color:"#fff", border:"none", borderRadius:8, cursor:"pointer" }}>Send</button>
-              {ai.messages.length>0&&<button onClick={ai.reset} style={{ padding:"11px 15px", background:"#F8F9FA", border:`1px solid ${C.border}`, borderRadius:8, color:"#6B7280", fontSize:12, cursor:"pointer" }}>Clear</button>}
+              {ai.messages.length>0&&<button onClick={ai.reset} style={{ padding:"11px 15px", background:"#f0f4f9", border:`1px solid ${C.border}`, borderRadius:8, color:"#7a8fa8", fontSize:12, cursor:"pointer" }}>Clear</button>}
             </div>
           </div>
         )}
@@ -3610,27 +4385,31 @@ export default function NestleHRDemo() {
       <JouleWidget currentUser={currentUser} />
 
       {/* CHANGE PASSWORD MODAL */}
-      {showChangePwd && <ChangePwdModal token={currentUser.token||sessionStorage.getItem("nestle_eos_token")||""} onClose={()=>setShowChangePwd(false)} />}
+      {showChangePwd && <ChangePwdModal token={currentUser.token||localStorage.getItem("eos_token")||""} onClose={()=>setShowChangePwd(false)} />}
 
       {/* USER MANAGEMENT MODAL */}
-      {showUserMgmt && <UserMgmtModal token={currentUser.token||sessionStorage.getItem("nestle_eos_token")||""} onClose={()=>setShowUserMgmt(false)} currentUser={currentUser} />}
+      {showUserMgmt && <UserMgmtModal token={currentUser.token||localStorage.getItem("eos_token")||""} onClose={()=>setShowUserMgmt(false)} currentUser={currentUser} />}
+
+      </div>{/* end content-area */}
+      </div>{/* end main */}
 
       <style>{`
         @keyframes spin    { to { transform: rotate(360deg); } }
         @keyframes fadeIn  { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
         @keyframes slideIn { from { transform:translateX(20px); opacity:0; } to { transform:translateX(0); opacity:1; } }
         @keyframes bounce  { 0%,80%,100%{transform:scale(0)} 40%{transform:scale(1)} }
-        * { box-sizing:border-box; margin:0; padding:0; }
-        body { -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; text-rendering:optimizeLegibility; background:#F5F5F5; }
-        ::-webkit-scrollbar { width:6px; height:6px; }
-        ::-webkit-scrollbar-track { background:#F5F5F5; }
-        ::-webkit-scrollbar-thumb { background:#D0D0D0; border-radius:99px; }
-        ::-webkit-scrollbar-thumb:hover { background:#B0B0B0; }
-        input, select, button, textarea { font-family:inherit; }
-        input::placeholder { color:#AAAAAA; font-size:13px; }
-        select option { background:#FFFFFF; color:#1A1A1A; }
-        th { font-weight:600; letter-spacing:0.04em; color:#6B7280; }
-        a { color:#005695; }
+        *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+        html, body { height:100%; font-family:'Sora',sans-serif; background:#f0f4f9; color:#0d1f35; font-size:14px; -webkit-font-smoothing:antialiased; }
+        ::-webkit-scrollbar { width:5px; height:5px; }
+        ::-webkit-scrollbar-track { background:#f0f4f9; }
+        ::-webkit-scrollbar-thumb { background:#a8c8f0; border-radius:99px; }
+        ::-webkit-scrollbar-thumb:hover { background:#1e6dc5; }
+        input, select, button, textarea { font-family:'Sora',sans-serif; }
+        input::placeholder { color:#7a8fa8; font-size:13px; }
+        select option { background:#ffffff; color:#0d1f35; }
+        th { font-weight:600; letter-spacing:0.06em; color:#7a8fa8; }
+        a { color:#1e6dc5; }
+        .mono { font-family:'JetBrains Mono',monospace; }
       `}</style>
     </div>
   );
