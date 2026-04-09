@@ -31,7 +31,7 @@ if (clientBuild) {
   console.log("✅ Serving React build from:", clientBuild);
   app.use(express.static(clientBuild));
   // Catch-all: send index.html for any non-API route (React Router)
-  app.get("*", function(req, res) {
+  app.get("/{*path}", function(req, res) {
     if (!req.path.startsWith("/api") && !req.path.startsWith("/auth") && !req.path.startsWith("/sf") && !req.path.startsWith("/proxy")) {
       res.sendFile(path.join(clientBuild, "index.html"));
     }
@@ -697,6 +697,11 @@ app.get("/agents/log", softAuth, function(req, res) {
   res.json(logs);
 });
 
+
+// ── Health check (Railway) ────────────────────────────────────────
+app.get("/health", function(req, res) {
+  res.json({ ok:true, status:"healthy", ts:new Date().toISOString() });
+});
 
 app.listen(PORT, function() {
   console.log("✅ Nestlé EOS Server running on port " + PORT);
