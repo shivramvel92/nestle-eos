@@ -2,10 +2,15 @@
 nixPkgs = ["nodejs_22", "python3", "pkg-config", "gcc", "gnumake"]
 
 [phases.install]
-cmds = ["npm install"]
+cmds = [
+  "npm install",
+  "cd client && npm install"
+]
 
 [phases.build]
-cmds = ["[ -d client ] && cd client && npm install && npm run build || echo 'No client folder, skipping React build'"]
+cmds = [
+  "cd client && npm run build"
+]
 
 [start]
 cmd = "node server.js"
