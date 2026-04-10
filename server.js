@@ -13,7 +13,7 @@ if (DB.countEmployees() === 0) {
 const app      = express();
 
 // ── Config ────────────────────────────────────────────────────────
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || "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";
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || "";
 const SF_BASE_URL   = "https://apisalesdemo2.successfactors.eu";
 const SF_USERNAME   = "sfapi@SFCPART001970";
 const SF_PASSWORD   = "Admin@2024";
@@ -37,12 +37,6 @@ const clientBuild = buildPaths.find(p => fs.existsSync(p));
 if (clientBuild) {
   console.log("✅ Serving React build from:", clientBuild);
   app.use(express.static(clientBuild));
-  // Catch-all: send index.html for any non-API route (React Router)
-  app.get("/{*path}", function(req, res) {
-    if (!req.path.startsWith("/api") && !req.path.startsWith("/auth") && !req.path.startsWith("/sf") && !req.path.startsWith("/proxy")) {
-      res.sendFile(path.join(clientBuild, "index.html"));
-    }
-  });
 } else {
   console.log("⚠️  No React build found. API-only mode.");
   app.get("/", function(req, res) { res.json({ status:"ok", message:"Nestlé EOS API running. React build not found." }); });
@@ -451,7 +445,7 @@ app.get("/sf/test", async function(req, res) {
 // ══════════════════════════════════════════════════════════════════
 // ANTHROPIC PROXY
 // ══════════════════════════════════════════════════════════════════
-app.post("/proxy", async function(req, res) {
+app.post("/proxy", softAuth, async function(req, res) {
   try {
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method:"POST",
@@ -673,7 +667,14 @@ app.post("/agents/copilot", softAuth, async function(req, res) {
 app.post("/agents/sentinel", softAuth, async function(req, res) {
   try {
     const result = await runAgent(
-      `You are Nestlé's Safety Sentinel AI Agent. Your job is to proactively scan all factory data, identify safety risks, and take action — creating incidents, fatigue alerts, and manager notifications as needed. Be thorough: check every factory. If overtime is high (>12h) and there are open incidents, escalate. Always notify managers of critical findings. Report what actions you took.`,
+      `You are Nestlé's Safety Sentinel AI Agent — a fully autonomous safety officer that proactively scans ALL factory data, identifies emerging safety risks, and takes IMMEDIATE action without human intervention. Your autonomous capabilities:
+1. DETECT: Scan every factory for high overtime + open incidents (compound risk)
+2. ALERT: Create fatigue alerts for employees with fatigue_score > 70
+3. ESCALATE: Create safety incidents for factories with 3+ open issues
+4. NOTIFY: Send manager notifications for every CRITICAL finding
+5. REPORT: Provide a comprehensive risk assessment
+
+Be thorough — check EVERY factory. Cross-reference overtime data with incident history. If overtime > 12h AND there are open incidents at the same factory, that's a CRITICAL compound risk. Always take action first, then report what you did. Format your report clearly with factory names, specific numbers, and actions taken.`,
       "Run a full safety scan across all Nestlé factories. Identify risks, create alerts for critical cases, and notify managers. Report your findings.",
       SAFETY_SENTINEL_TOOLS,
       12
@@ -709,6 +710,13 @@ app.get("/agents/log", softAuth, function(req, res) {
 app.get("/health", function(req, res) {
   res.json({ ok:true, status:"healthy", ts:new Date().toISOString() });
 });
+
+// ── React catch-all (MUST be after all API routes) ───────────────
+if (clientBuild) {
+  app.get("/{*path}", function(req, res) {
+    res.sendFile(path.join(clientBuild, "index.html"));
+  });
+}
 
 app.listen(PORT, function() {
   console.log("✅ Nestlé EOS Server running on port " + PORT);
@@ -746,14 +754,24 @@ const SPECIALIST_AGENTS = {
   safety_agent: {
     name:   "Safety Agent",
     emoji:  "🛡",
-    system: `You are the Nestlé Safety Specialist Agent. Your domain: safety incidents, factory risk scores, FSSC 22000 compliance. When asked to analyse safety, use tools to get real incident data, calculate risk levels per factory, and produce a structured JSON report. Always output valid JSON with keys: risk_level (CRITICAL/HIGH/MEDIUM/LOW), factories_at_risk (array), immediate_actions (array), incident_count, recommendation.`,
+    system: `You are the Nestlé Safety Sentinel — an autonomous AI agent specialised in FSSC 22000 compliance, safety incident analysis, and proactive risk detection across Nestlé's global factory network. When analysing safety:
+1. Use tools to pull REAL incident data from all factories
+2. Cross-reference incident frequency with fatigue scores to identify systemic risks
+3. Calculate risk levels using the Nestlé Risk Matrix (severity × likelihood)
+4. Produce a structured JSON report with keys: risk_level (CRITICAL/HIGH/MEDIUM/LOW), factories_at_risk (array with factory names and specific reasons), immediate_actions (array of specific, measurable interventions), incident_count, fssc_compliance_gaps (array), recommendation.
+Always cite specific factory IDs, employee counts, and incident types. Be authoritative and action-oriented.`,
     tools:  ["query_incidents", "get_all_factories", "get_factory_stats", "create_incident", "notify_manager"],
   },
 
   fatigue_agent: {
     name:   "Fatigue Agent",
     emoji:  "⚡",
-    system: `You are the Nestlé Fatigue Risk Specialist Agent. Your domain: employee overtime, fatigue scores, shift patterns, rest compliance. When asked to analyse fatigue, use tools to find high-risk employees, calculate factory fatigue indices, and output structured JSON with keys: critical_employees (array with id, name, score), factories_ranked (array), total_at_risk, avg_overtime, recommended_actions (array).`,
+    system: `You are the Nestlé Fatigue Risk Intelligence Agent — an autonomous AI that monitors 270K+ employees for burnout, overtime violations, and rest-compliance risks. When analysing fatigue:
+1. Query ALL factories for CRITICAL and HIGH risk employees
+2. Calculate factory-level Fatigue Risk Index (weighted: overtime_hrs × 0.4 + fatigue_score × 0.4 + consecutive_shifts × 0.2)
+3. Identify employees exceeding ILO weekly hour limits (48h) and EU Working Time Directive thresholds
+4. Take AUTONOMOUS ACTION: create fatigue alerts for critical cases, apply hour caps for the worst offenders
+Output structured JSON with keys: critical_employees (array with id, name, factory, score, overtime_hrs), factories_ranked (array sorted by risk), total_at_risk, avg_overtime, autonomous_actions_taken (array of what you did), recommended_actions (array of what managers should do).`,
     tools:  ["query_employees", "get_factory_stats", "get_all_factories", "create_fatigue_alert", "apply_employee_action"],
   },
 
@@ -817,7 +835,7 @@ async function runOrchestrator(userTask, bus) {
     headers:{ "Content-Type":"application/json", "x-api-key":ANTHROPIC_API_KEY, "anthropic-version":"2023-06-01" },
     body: JSON.stringify({
       model: "claude-sonnet-4-20250514", max_tokens:600,
-      system:`You are the Nestlé EOS Orchestrator. You coordinate 4 specialist agents: safety_agent, fatigue_agent, skills_agent, workforce_agent. Given a task, decide which agents to activate and what specific sub-task to assign each one. Respond with ONLY valid JSON: { "agents": [ { "id": "safety_agent", "task": "specific task description" } ] }. Select only the agents relevant to the request. Always include at least 2 agents.`,
+      system:`You are the Nestlé EOS Orchestrator — the central intelligence coordinating a multi-agent AI system for Nestlé's global workforce of 270K employees across 350+ factories. You coordinate 4 specialist agents: safety_agent (FSSC 22000 compliance, incident analysis), fatigue_agent (overtime, rest compliance, burnout prevention), skills_agent (NCE maturity, training gaps, reskilling), workforce_agent (headcount, utilisation, talent mobility). Given a task, decide which agents to activate and craft a SPECIFIC sub-task for each with clear data requirements. Respond with ONLY valid JSON: { "agents": [ { "id": "safety_agent", "task": "specific task description" } ] }. Select only agents relevant to the request. Always include at least 2 agents for cross-domain insight.`,
       messages:[{ role:"user", content:userTask }]
     })
   });
@@ -843,7 +861,24 @@ async function runOrchestrator(userTask, bus) {
     headers:{ "Content-Type":"application/json", "x-api-key":ANTHROPIC_API_KEY, "anthropic-version":"2023-06-01" },
     body: JSON.stringify({
       model:"claude-sonnet-4-20250514", max_tokens:1000,
-      system:`You are the Nestlé EOS Orchestrator. Synthesise reports from specialist agents into a single executive-level briefing. Be specific with numbers and factory names. Structure: 1) Overall Status (1 sentence) 2) Key Findings per domain 3) Immediate Actions Required 4) Strategic Recommendations. Reference Nestlé context: NCE, FSSC 22000, Net Zero 2050.`,
+      system:`You are the Nestlé EOS Orchestrator delivering an executive-level AI briefing. Synthesise specialist agent reports into a compelling, data-rich narrative. Be SPECIFIC with numbers, percentages, factory names, and employee counts. Structure your response with clear Markdown:
+
+## 🎯 Executive Summary
+One powerful sentence with the most critical finding.
+
+## 📊 Key Findings
+Bullet each domain's top insight with real numbers.
+
+## 🚨 Immediate Actions Required
+Numbered list of urgent interventions with responsible parties.
+
+## 📈 Strategic Recommendations
+Forward-looking actions tied to Nestlé frameworks: NCE maturity roadmap, FSSC 22000 compliance trajectory, Net Zero 2050 workforce readiness.
+
+## 🤖 AI Agent Activity
+Summarise how many autonomous actions the agents took (alerts created, managers notified, interventions applied).
+
+Reference Nestlé context throughout. Be authoritative and concise.`,
       messages:[{ role:"user", content:`Original task: ${userTask}\n\nSpecialist Agent Reports:\n${synthContext}\n\nProvide executive synthesis.` }]
     })
   });

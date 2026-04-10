@@ -1593,6 +1593,8 @@ const AUTH = {
       method:"POST", headers:{"Authorization":"Bearer "+token},
     }).catch(()=>{});
     localStorage.removeItem("eos_token");
+    localStorage.removeItem("nestle_eos_user");
+    window.__EOS_TOKEN__=null;
   },
   async changePassword(token, currentPassword, newPassword) {
     const r = await fetch(API_BASE+"/auth/change-password", {
@@ -1628,7 +1630,7 @@ const AUTH = {
 };
 
 function sfFetch(path, token) {
-  return fetch("http://localhost:3001" + path, {
+  return fetch(API_BASE + path, {
     headers: { "Authorization": "Bearer " + token }
   }).then(r => r.json());
 }
@@ -3827,11 +3829,14 @@ export default function NestleHRDemo() {
   const [showChangePwd,  setShowChangePwd]  = useState(false);
   const [showUserMgmt,   setShowUserMgmt]   = useState(false);
   const [currentUser, setCurrentUser] = useState(() => {
-    // Restore session from sessionStorage on reload
-    const token = sessionStorage.getItem("nestle_eos_token");
-    const stored = sessionStorage.getItem("nestle_eos_user");
+    // Restore session from localStorage on reload
+    const token = localStorage.getItem("eos_token");
+    const stored = localStorage.getItem("nestle_eos_user");
     if (token && stored) {
-      try { return { ...JSON.parse(stored), token }; } catch {}
+      try {
+        window.__EOS_TOKEN__ = token;
+        return { ...JSON.parse(stored), token };
+      } catch {}
     }
     return null;
   });
@@ -3839,6 +3844,19 @@ export default function NestleHRDemo() {
   const [showAppLauncher,  setShowAppLauncher]  = useState(false);
   const [dbStats,         setDbStats]         = useState({});
   const [dbFactories,     setDbFactories]     = useState([]);
+
+  // Validate stored token on mount
+  useEffect(() => {
+    if (!currentUser) return;
+    fetch(API_BASE+"/auth/me", { headers:authH() })
+      .then(r => { if (!r.ok) throw new Error("expired"); return r.json(); })
+      .catch(() => {
+        localStorage.removeItem("eos_token");
+        localStorage.removeItem("nestle_eos_user");
+        window.__EOS_TOKEN__=null;
+        setCurrentUser(null);
+      });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load dashboard stats from DB
   useEffect(() => {
@@ -3869,7 +3887,7 @@ export default function NestleHRDemo() {
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior:"smooth" }); }, [ai.messages]);
 
   if (!currentUser) return <LoginScreen onLogin={(user) => {
-    sessionStorage.setItem("nestle_eos_user", JSON.stringify(user));
+    localStorage.setItem("nestle_eos_user", JSON.stringify(user));
     setCurrentUser(user);
   }} />;
 
@@ -3951,8 +3969,8 @@ export default function NestleHRDemo() {
 
         {/* Sidebar nav */}
         <div style={{ flex:1, padding:"14px 10px", display:"flex", flexDirection:"column", gap:1, overflowY:"auto" }}>
-          {/* App launcher button */}
-          <div style={{ position:"relative", marginBottom:8 }}>
+          {/* App launcher button — opens topbar launcher */}
+          <div style={{ marginBottom:8 }}>
             <button onClick={()=>setShowAppLauncher(s=>!s)}
               style={{ width:"100%", display:"flex", alignItems:"center", gap:10, padding:"9px 11px", borderRadius:7, cursor:"pointer", fontSize:13, fontWeight:400, color:"rgba(255,255,255,0.65)", background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)", transition:"all 0.15s" }}
               onMouseOver={e=>e.currentTarget.style.background="rgba(255,255,255,0.1)"}
@@ -3963,31 +3981,6 @@ export default function NestleHRDemo() {
               All Applications
               <svg style={{ marginLeft:"auto" }} width="12" height="12" viewBox="0 0 12 12"><path d="M3 4.5L6 7.5L9 4.5" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" fill="none" strokeLinecap="round"/></svg>
             </button>
-            {showAppLauncher && (
-              <>
-                <div style={{ position:"fixed",inset:0,zIndex:498 }} onClick={()=>setShowAppLauncher(false)} />
-                <div style={{ position:"absolute",left:0,top:46,width:348,background:"#ffffff",border:"1px solid rgba(10,49,97,0.12)",borderRadius:10,boxShadow:"0 10px 40px rgba(10,49,97,0.15)",zIndex:499,overflow:"hidden",animation:"fadeIn 0.15s ease" }}>
-                  <div style={{ padding:"12px 16px 10px",borderBottom:"1px solid rgba(10,49,97,0.08)" }}>
-                    <div style={{ fontSize:13,fontWeight:600,color:"#0d1f35" }}>Applications</div>
-                    <div style={{ fontSize:11,color:"#7a8fa8",marginTop:1 }}>Nestlé EOS Modules</div>
-                  </div>
-                  <div style={{ padding:"8px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:3 }}>
-                    {APPS.map(app=>(
-                      <button key={app.id} onClick={()=>{ setTab(app.id); setShowAppLauncher(false); }}
-                        style={{ display:"flex",alignItems:"flex-start",gap:10,padding:"10px 12px",borderRadius:8,background:tab===app.id?"#e8f1fb":"transparent",border:`1px solid ${tab===app.id?"#a8c8f0":"transparent"}`,cursor:"pointer",textAlign:"left",transition:"all 0.1s" }}
-                        onMouseOver={e=>{ if(tab!==app.id){ e.currentTarget.style.background="#f7fafd"; e.currentTarget.style.border="1px solid rgba(10,49,97,0.09)"; } }}
-                        onMouseOut={e=>{ if(tab!==app.id){ e.currentTarget.style.background="transparent"; e.currentTarget.style.border="1px solid transparent"; } }}>
-                        <div style={{ width:32,height:32,borderRadius:8,background:app.color+"18",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0 }}>{app.icon}</div>
-                        <div>
-                          <div style={{ fontSize:12,fontWeight:500,color:"#0d1f35",marginBottom:1 }}>{app.label}</div>
-                          <div style={{ fontSize:10,color:"#7a8fa8",lineHeight:1.4 }}>{app.desc.slice(0,45)}{app.desc.length>45?"…":""}</div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
           </div>
 
           {/* Nav groups */}
@@ -4041,7 +4034,7 @@ export default function NestleHRDemo() {
               <div style={{ fontSize:13, fontWeight:500, color:"#fff", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{currentUser?.name}</div>
               <div style={{ fontSize:10, color:"rgba(255,255,255,0.4)", marginTop:1 }}>{currentUser?.role}</div>
             </div>
-            <button onClick={async()=>{ if(window.__EOS_TOKEN__){ await fetch(API_BASE+"/auth/logout",{method:"POST",headers:authH()}).catch(()=>{}); localStorage.removeItem("eos_token"); } setCurrentUser(null); }}
+            <button onClick={async()=>{ if(window.__EOS_TOKEN__){ await fetch(API_BASE+"/auth/logout",{method:"POST",headers:authH()}).catch(()=>{}); } localStorage.removeItem("eos_token"); localStorage.removeItem("nestle_eos_user"); window.__EOS_TOKEN__=null; setCurrentUser(null); }}
               style={{ background:"none", border:"none", cursor:"pointer", color:"rgba(255,255,255,0.35)", padding:4, transition:"color 0.15s" }}
               onMouseOver={e=>e.currentTarget.style.color="rgba(255,255,255,0.8)"}
               onMouseOut={e=>e.currentTarget.style.color="rgba(255,255,255,0.35)"}
@@ -4139,6 +4132,8 @@ export default function NestleHRDemo() {
             <button onClick={async()=>{
               try { await fetch(API_BASE+"/auth/logout",{ method:"POST", headers:authH() }); } catch(e){}
               localStorage.removeItem("eos_token");
+              localStorage.removeItem("nestle_eos_user");
+              window.__EOS_TOKEN__=null;
               setCurrentUser(null);
             }}
               style={{ padding:"5px 12px", fontSize:11, fontWeight:700, background:"transparent", border:"1px solid #D0D0D0", borderRadius:7, color:"#3a5068", cursor:"pointer" }}>
